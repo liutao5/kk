@@ -2,15 +2,34 @@ import {
   Breadcrumbs,
   Button,
   Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
   Grid,
+  IconButton,
+  MenuItem,
+  Modal,
+  Stack,
   TextField,
   Typography,
 } from "@mui/material";
-import DashboardLayout from "../layout";
-import { Table } from "antd";
+import DashboardLayout from "@/layouts/dashboard";
 import { useEffect, useState } from "react";
 import { cancelRemoval, getRemoval } from "@/api/mainApi";
+import { DataGridPremium, GridColDef } from "@mui/x-data-grid-premium";
+import FetchTable from "@/components/fetch-table";
+import {
+  DateRangePicker,
+  SingleInputDateRangeField,
+} from "@mui/x-date-pickers-pro";
+import { format } from "date-fns";
+import { useRouter } from "next/router";
+import { useSettingsContext } from "@/components/settings";
+import { enqueueSnackbar } from "@/components/snackbar";
+import CustomPopover from "@/components/popover";
+import CloseIcon from "@mui/icons-material/Close";
 
 type Removal = {
   id: number;
@@ -20,26 +39,64 @@ type Removal = {
   type: number;
   createTime: string;
   updateTime: string;
+  remark?: string;
+  items?: Detail[];
 };
 
-const removalStatusMap = {
+type Detail = {
+  recipeName: string;
+  totalNumber: string;
+  remark?: string;
+};
+
+const removalStatusMap: Record<string, string> = {
   0: "待出库",
   2: "出库中",
   3: "已出库",
   5: "已取消",
 };
 
-const typeMap = {
+const typeMap: Record<string, string> = {
   0: "标准出库",
 };
 
+const defaultFilter = {
+  orderCode: "",
+  recipeName: "",
+  status: "",
+};
+
 export default function RemovalPage() {
-  const [dataList, setDataList] = useState<Removal[]>([]);
+  const { push } = useRouter();
+  const [filter, setFilter] = useState<Record<string, string>>(defaultFilter);
+  const [rows, setRows] = useState<Removal[]>([]);
+  const [detail, showDetail] = useState<Removal>();
+  const [dateValue, setDateValue] = useState<[Date | null, Date | null]>([
+    null,
+    null,
+  ]);
+
   const query = () => {
-    getRemoval().then((res) => {
-      console.log(res);
+    getRemoval({
+      ...filter,
+      fromTime:
+        dateValue[0] && format(dateValue[0] ?? 0, "yyyy-MM-dd 00:00:00"),
+      toTime: dateValue[1] && format(dateValue[1] ?? 0, "yyyy-MM-dd 00:00:00"),
+    }).then((res) => {
       if (res.data.code === 200) {
-        setDataList(res.data.data);
+        setRows(res.data.data);
+      } else {
+        console.log(res.data.msg);
+      }
+    });
+  };
+
+  const onReset = () => {
+    setFilter(defaultFilter);
+    setDateValue([null, null]);
+    getRemoval().then((res) => {
+      if (res.data.code === 200) {
+        setRows(res.data.data);
       } else {
         console.log(res.data.msg);
       }
@@ -47,89 +104,282 @@ export default function RemovalPage() {
   };
 
   const handleCancel = (id: number) => {
-    cancelRemoval(id).then((res) => console.log(res));
+    cancelRemoval(id).then((res) => {
+      if (res.data.code === 200) {
+        getRemoval().then((res) => {
+          if (res.data.code === 200) {
+            setRows(res.data.data);
+          } else {
+            enqueueSnackbar(res.data.msg, {
+              autoHideDuration: 2000,
+              variant: "error",
+            });
+          }
+        });
+      } else {
+        enqueueSnackbar(res.data.msg, {
+          autoHideDuration: 2000,
+          variant: "error",
+        });
+      }
+    });
   };
 
   useEffect(() => {
-    query();
+    getRemoval().then((res) => {
+      if (res.data.code === 200) {
+        setRows(res.data.data);
+      } else {
+        console.log(res.data.msg);
+      }
+    });
   }, []);
 
-  const columns = [
+  const columns: GridColDef[] = [
     {
-      title: "出库单",
-      dataIndex: "orderCode",
+      headerName: "出库单",
+      field: "orderCode",
+      headerAlign: "center",
+      align: "center",
+      flex: 1,
     },
     {
-      title: "配方名",
-      dataIndex: "",
+      headerName: "配方名",
+      field: "recipeNamesString",
+      headerAlign: "center",
+      align: "center",
+      flex: 1,
     },
     {
-      title: "状态",
-      dataIndex: "status",
-      render: (value: 0 | 2 | 3 | 5) => removalStatusMap[value],
+      headerName: "状态",
+      field: "status",
+      headerAlign: "center",
+      align: "center",
+      flex: 1,
+      valueGetter: (params) => removalStatusMap[params.value],
     },
     {
-      title: "申请人",
-      dataIndex: "creatorName",
+      headerName: "申请人",
+      field: "creatorName",
+      headerAlign: "center",
+      align: "center",
+      flex: 1,
     },
     {
-      title: "单据类型",
-      dataIndex: "type",
-      render: (value: 0) => typeMap[value],
+      headerName: "单据类型",
+      field: "type",
+      headerAlign: "center",
+      align: "center",
+      flex: 1,
+      valueGetter: (params) => typeMap[params.value],
     },
     {
-      title: "申请时间",
-      dataIndex: "createTime",
+      headerName: "申请时间",
+      field: "createTime",
+      headerAlign: "center",
+      align: "center",
+      width: 200,
     },
     {
-      title: "变更时间",
-      dataIndex: "updateTime",
+      headerName: "变更时间",
+      field: "updateTime",
+      headerAlign: "center",
+      align: "center",
+      width: 200,
     },
     {
-      title: "操作",
-      dataIndex: "status",
-      render: (value: number, record: Removal) => (
-        <>
-          <Button>详情</Button>
-          {value === 0 ||
-            value === 2 ||
-            (true && (
-              <Button onClick={() => handleCancel(record.id)}>取消</Button>
-            ))}
-        </>
-      ),
+      headerName: "操作",
+      field: "actions",
+      headerAlign: "center",
+      align: "center",
+      flex: 1,
+      type: "actions",
+      getActions: (record) => {
+        console.log(record.row);
+        return [
+          <>
+            <Button onClick={() => showDetail(record.row)}>详情</Button>
+            <CustomPopover
+              disabled={record.row.status != 0 && record.row.status != 2}
+              message={`您正在取消${record.row.orderCode}出库单,确认取消吗?`}
+              onOK={() => handleCancel(record.row.id)}
+            />
+            ,
+          </>,
+        ];
+      },
+    },
+  ];
+  const { themeStretch } = useSettingsContext();
+  const DetailColumns: GridColDef[] = [
+    {
+      headerName: "配方名",
+      field: "recipeName",
+      headerAlign: "center",
+      align: "center",
+      flex: 1,
+    },
+    {
+      headerName: "申请量",
+      field: "totalNumber",
+      headerAlign: "center",
+      align: "center",
+      flex: 1,
+    },
+    {
+      headerName: "备注",
+      field: "remark",
+      headerAlign: "center",
+      align: "center",
+      flex: 1,
     },
   ];
   return (
-    <Container>
+    <Container maxWidth={themeStretch ? false : "xl"}>
       <Breadcrumbs>
-        <Typography>出库管理</Typography>
+        <Typography variant="h4" color="text.primary" gutterBottom>
+          出库管理
+        </Typography>
       </Breadcrumbs>
-      <Divider />
       <Grid container spacing={2} sx={{ p: 2 }}>
         <Grid item xs={2}>
-          <TextField label="出库单号" />
+          <TextField
+            label="出库单号"
+            variant="outlined"
+            size="small"
+            value={filter.orderCode}
+            onChange={(e) =>
+              setFilter({ ...filter, orderCode: e.target.value })
+            }
+          />
         </Grid>
         <Grid item xs={2}>
-          <TextField label="配方名" />
+          <TextField
+            label="配方名"
+            variant="outlined"
+            size="small"
+            value={filter.recipeName}
+            onChange={(e) =>
+              setFilter({ ...filter, recipeName: e.target.value })
+            }
+          />
         </Grid>
         <Grid item xs={2}>
-          <TextField label="状态" />
+          <TextField
+            select
+            label="状态"
+            variant="outlined"
+            size="small"
+            fullWidth
+            value={filter.status}
+            onChange={(e) => setFilter({ ...filter, status: e.target.value })}
+          >
+            <MenuItem key="0" value="">
+              选择状态
+            </MenuItem>
+            {Object.entries(removalStatusMap).map((item) => (
+              <MenuItem key={item[0]} value={item[0]}>
+                {item[1]}
+              </MenuItem>
+            ))}
+          </TextField>
         </Grid>
+        <Grid item xs={3}>
+          <DateRangePicker
+            label="申请日期"
+            sx={{ width: "280px" }}
+            value={dateValue}
+            slots={{ field: SingleInputDateRangeField }}
+            slotProps={{ textField: { size: "small" } }}
+            onChange={(dataList) => setDateValue(dataList)}
+            format="yyyy/MM/dd"
+          />
+        </Grid>
+        <Grid item xs={1}></Grid>
         <Grid item xs={2}>
-          <TextField label="申请日期" />
-        </Grid>
-        <Grid item xs={2}></Grid>
-        <Grid item xs={1}>
-          <Button>重置</Button>
-        </Grid>
-        <Grid item xs={1}>
-          <Button>查询</Button>
+          <Stack direction="row" spacing={2}>
+            <Button variant="outlined" onClick={onReset}>
+              重置
+            </Button>
+            <Button variant="contained" onClick={() => query()}>
+              查询
+            </Button>
+          </Stack>
         </Grid>
         <Grid item xs={12}>
-          <Table rowKey="id" columns={columns} dataSource={dataList} />
+          <FetchTable
+            columns={columns}
+            rows={rows}
+            customToobar={
+              <Button
+                variant="text"
+                onClick={() => push("/dashboard/removal/new")}
+              >
+                新增
+              </Button>
+            }
+          />
         </Grid>
       </Grid>
+      <Dialog
+        fullWidth
+        maxWidth="sm"
+        open={!!detail}
+        onClose={() => showDetail(undefined)}
+      >
+        <DialogTitle>出库单详情</DialogTitle>
+        <IconButton
+          onClick={() => showDetail(undefined)}
+          sx={{
+            position: "absolute",
+            right: 8,
+            top: 8,
+            color: (theme) => theme.palette.grey[500],
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
+        <DialogContent>
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <Typography variant="h6">基础信息</Typography>
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                label="出库单号"
+                value={detail?.orderCode}
+                size="small"
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                label="申请人"
+                value={detail?.creatorName}
+                size="small"
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <TextField label="单据类型" value="标准出库" size="small" />
+            </Grid>
+            <Grid item xs={6}>
+              <TextField label="备注" value={detail?.remark} size="small" />
+            </Grid>
+            <Grid item xs={12}>
+              <Typography variant="h6">详细信息</Typography>
+            </Grid>
+            <Grid item xs={12}>
+              <DataGridPremium
+                columns={DetailColumns}
+                rows={detail?.items || []}
+                hideFooter={true}
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => showDetail(undefined)}>关闭</Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }

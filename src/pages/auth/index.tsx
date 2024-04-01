@@ -87,7 +87,7 @@ export default function LoginPage() {
           variant="h3"
           sx={{ mb: 10, maxWidth: 480, textAlign: "center" }}
         >
-          Hi, Welcome back
+          宜兴困库管理系统
         </Typography>
         <Box
           alt="login_bg"

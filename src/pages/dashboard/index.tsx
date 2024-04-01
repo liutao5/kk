@@ -10,8 +10,8 @@ export default function DashboardPage() {
   return null;
 }
 
-export const statusMap: Record<number, string> = {
-  0: "待使用",
-  3: "已使用",
-  5: "已取消",
+export const statusMap: Record<string, string> = {
+  "0": "待使用",
+  "3": "已使用",
+  "5": "已取消",
 };

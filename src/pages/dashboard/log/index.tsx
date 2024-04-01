@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import DashboardLayout from "../layout";
+import DashboardLayout from "@/layouts/dashboard";
 import { getLog } from "@/api/mainApi";
 import {
   Breadcrumbs,
@@ -7,15 +7,18 @@ import {
   Container,
   Divider,
   Grid,
+  Stack,
   TextField,
   Typography,
 } from "@mui/material";
-import { Table } from "antd";
-import { ColumnsType } from "antd/es/table";
 import {
   DateRangePicker,
   SingleInputDateRangeField,
 } from "@mui/x-date-pickers-pro";
+import { GridColDef } from "@mui/x-data-grid-premium";
+import FetchTable from "@/components/fetch-table";
+import { format } from "date-fns";
+import { useSettingsContext } from "@/components/settings";
 
 type Log = {
   operId: number;
@@ -26,13 +29,40 @@ type Log = {
   operIp: string;
 };
 
+const defaultFilter = {
+  title: "",
+  operName: "",
+};
+
 export default function LogPage() {
-  const [dataList, setDataList] = useState<Log[]>([]);
+  const [filter, setFilter] = useState<Record<string, string>>(defaultFilter);
+  const [rows, setRows] = useState<Log[]>([]);
+  const [dateValue, setDateValue] = useState<[Date | null, Date | null]>([
+    null,
+    null,
+  ]);
 
   const query = () => {
+    getLog({
+      ...filter,
+      fromTime:
+        dateValue[0] && format(dateValue[0] ?? 0, "yyyy-MM-dd 00:00:00"),
+      toTime: dateValue[1] && format(dateValue[1] ?? 0, "yyyy-MM-dd 00:00:00"),
+    }).then((res) => {
+      if (res.data.code === 200) {
+        setRows(res.data.data);
+      } else {
+        console.log(res.data.msg);
+      }
+    });
+  };
+
+  const onReset = () => {
+    setFilter(defaultFilter);
+    setDateValue([null, null]);
     getLog().then((res) => {
       if (res.data.code === 200) {
-        setDataList(res.data.data);
+        setRows(res.data.data);
       } else {
         console.log(res.data.msg);
       }
@@ -41,64 +71,100 @@ export default function LogPage() {
 
   useEffect(() => {
     query();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const columns: ColumnsType<any> = [
+  const columns: GridColDef[] = [
     {
-      title: "操作时间",
-      dataIndex: "operTime",
-      width: 300,
-      fixed: true,
+      headerName: "操作时间",
+      field: "operTime",
+      headerAlign: "center",
+      align: "center",
+      flex: 1,
     },
     {
-      title: "操作功能",
-      dataIndex: "title",
-      width: 200,
+      headerName: "操作功能",
+      field: "title",
+      headerAlign: "center",
+      align: "center",
+      flex: 1,
     },
     {
-      title: "请求参数",
-      dataIndex: "operParam",
+      headerName: "请求参数",
+      field: "operParam",
+      headerAlign: "center",
+      align: "center",
+      width: 350,
     },
     {
-      title: "操作人",
-      dataIndex: "operName",
+      headerName: "操作人",
+      field: "operName",
+      headerAlign: "center",
+      align: "center",
+      flex: 1,
     },
 
     {
-      title: "IP地址",
-      dataIndex: "operIp",
+      headerName: "IP地址",
+      field: "operIp",
+      headerAlign: "center",
+      align: "center",
+      flex: 1,
     },
   ];
+  const { themeStretch } = useSettingsContext();
   return (
-    <Container>
+    <Container maxWidth={themeStretch ? false : "xl"}>
       <Breadcrumbs>
-        <Typography color="text.primary">操作日志</Typography>=
+        <Typography variant="h4" color="text.primary" gutterBottom>
+          操作日志
+        </Typography>
       </Breadcrumbs>
-      <Divider />
       <Grid container spacing={2} sx={{ p: 2 }}>
         <Grid item xs={2}>
-          <TextField label="操作模块" />
+          <TextField
+            label="操作功能"
+            size="small"
+            value={filter.title}
+            onChange={(e) => setFilter({ ...filter, title: e.target.value })}
+          />
         </Grid>
         <Grid item xs={2}>
-          <TextField label="操作人" />
+          <TextField
+            label="操作人"
+            size="small"
+            value={filter.operName}
+            onChange={(e) => setFilter({ ...filter, operName: e.target.value })}
+          />
         </Grid>
         <Grid item xs={3}>
           <DateRangePicker
             label="操作日期"
+            sx={{ width: "280px" }}
+            value={dateValue}
             slots={{ field: SingleInputDateRangeField }}
-            onChange={(res) => console.log(res)}
+            slotProps={{ textField: { size: "small" } }}
+            onChange={(dataList) => setDateValue(dataList)}
             format="yyyy/MM/dd"
           />
         </Grid>
         <Grid item xs={3}></Grid>
-        <Grid item xs={1}>
-          <Button>重置</Button>
-        </Grid>
-        <Grid item xs={1}>
-          <Button>查询</Button>
+        <Grid item xs={2}>
+          <Stack direction="row" spacing={2}>
+            <Button variant="outlined" onClick={onReset}>
+              重置
+            </Button>
+            <Button variant="contained" onClick={() => query()}>
+              查询
+            </Button>
+          </Stack>
         </Grid>
         <Grid item xs={12}>
-          <Table rowKey="operId" columns={columns} dataSource={dataList} />
+          <FetchTable
+            getRowId={(row) => row.operId}
+            columns={columns}
+            rows={rows}
+          />
         </Grid>
       </Grid>
     </Container>

@@ -1,8 +1,8 @@
-import { HOST_API } from "@/config-global";
+import { HOST_API_KEY } from "@/config-global";
 import axios from "axios";
 
 const axiosInstance = axios.create({
-  baseURL: HOST_API,
+  baseURL: HOST_API_KEY,
 });
 
 axiosInstance.interceptors.response.use(

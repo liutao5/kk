@@ -5,6 +5,9 @@ import { NextPage } from "next";
 import { LicenseInfo } from "@mui/x-license-pro";
 import { LocalizationProvider } from "@mui/x-date-pickers-pro";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { SettingsProvider, ThemeSettings } from "@/components/settings";
+import SnackbarProvider from "@/components/snackbar";
+import Head from "next/head";
 
 type NextPageWithLayout = NextPage & {
   getLayout?: (page: React.ReactElement) => React.ReactNode;
@@ -21,10 +24,23 @@ LicenseInfo.setLicenseKey(licenseKey);
 export default function RootLayout({ Component, pageProps }: MyAppProps) {
   const getLayout = Component.getLayout ?? ((page) => page);
   return (
-    <AuthProvider>
-      <LocalizationProvider dateAdapter={AdapterDateFns}>
-        <ThemeProvider>{getLayout(<Component {...pageProps} />)}</ThemeProvider>
-      </LocalizationProvider>
-    </AuthProvider>
+    <>
+      <Head>
+        <title>宜兴困库管理系统</title>
+      </Head>
+      <AuthProvider>
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
+          <SettingsProvider>
+            <ThemeProvider>
+              <ThemeSettings>
+                <SnackbarProvider>
+                  {getLayout(<Component {...pageProps} />)}
+                </SnackbarProvider>
+              </ThemeSettings>
+            </ThemeProvider>
+          </SettingsProvider>
+        </LocalizationProvider>
+      </AuthProvider>
+    </>
   );
 }

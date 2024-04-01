@@ -1,4 +1,4 @@
-import DashboardLayout from "../layout";
+import DashboardLayout from "@/layouts/dashboard";
 
 export default function SettingPage() {
   return <>setting</>;

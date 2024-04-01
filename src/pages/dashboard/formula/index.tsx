@@ -10,24 +10,32 @@ import {
   Box,
   Breadcrumbs,
   Button,
+  ClickAwayListener,
   Container,
   Divider,
   Grid,
+  IconButton,
+  InputAdornment,
   MenuItem,
+  Popover,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
-import { Table } from "antd";
 import * as Yup from "yup";
 import { useCallback, useEffect, useRef, useState } from "react";
-import DashboardLayout from "../layout";
+import DashboardLayout from "@/layouts/dashboard";
 import RHFInput from "@/components/hook-form/RHFInput";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import DialogForm from "@/components/dialog-form";
 import FetchTable from "@/components/fetch-table";
 import { GridColDef, GridRowsProp } from "@mui/x-data-grid-premium";
+import { enqueueSnackbar } from "notistack";
+import { useSettingsContext } from "@/components/settings";
+import QRCode from "react-qr-code";
+import Iconify from "@/components/iconify";
+import CloseIcon from "@mui/icons-material/Close";
 
 export type Formula = {
   id: number;
@@ -42,18 +50,34 @@ type FormulaProps = {
   afterSubmit?: string;
 };
 
-export default function FormulaPage() {
-  const [open, setOpen] = useState(false);
-  const [filter, setFilter] = useState<Record<string, string>>({
-    name: "",
-    enable: "",
-  });
+const defaultFilter = {
+  name: "",
+  enable: "",
+};
 
+export default function FormulaPage() {
+  const [filter, setFilter] = useState<Record<string, string>>(defaultFilter);
+  const [rows, setRows] = useState<GridRowsProp>([]);
+  const [open, setOpen] = useState(false);
   const [open2, setOpen2] = useState(false);
   const [editFormula, setEditFormula] = useState<Formula>();
-  const [rows, setRows] = useState<GridRowsProp>([]);
+  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
+  const [deleteId, setDeleteId] = useState<string>();
+
+  const openRemove = Boolean(anchorEl);
+  const id = open ? "simple-popover" : undefined;
 
   const query = () => {
+    getFormula(filter).then((res) => {
+      if (res.data.code === 200) {
+        console.log(res.data.data);
+        setRows(res.data.data);
+      }
+    });
+  };
+
+  const onReset = () => {
+    setFilter(defaultFilter);
     getFormula().then((res) => {
       if (res.data.code === 200) {
         setRows(res.data.data);
@@ -63,9 +87,8 @@ export default function FormulaPage() {
 
   useEffect(() => {
     query();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => setOpen2(!!editFormula), [editFormula]);
 
   const update = (id: number, enable: boolean) => {
     updateFormulaStatus(id, enable).then((res) => {
@@ -75,11 +98,27 @@ export default function FormulaPage() {
     });
   };
 
-  const remove = (id: number) => {
-    removeFormula(id).then((res) => {
+  const handleRemove = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    id: string | undefined
+  ) => {
+    setDeleteId(id);
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => setAnchorEl(null);
+
+  const remove = () => {
+    removeFormula(deleteId || "").then((res) => {
       if (res.data.code === 200) {
         query();
+      } else {
+        enqueueSnackbar(res.data.msg, {
+          autoHideDuration: 2000,
+          variant: "error",
+        });
       }
+      handleClose();
     });
   };
 
@@ -110,7 +149,7 @@ export default function FormulaPage() {
     setOpen(false);
   };
 
-  const onSubmit = async (data: FormulaProps) => {
+  const onSubmit = (data: FormulaProps) => {
     const { name, code } = data;
     addFormula(name, code).then((res) => {
       if (res.data.code === 200) {
@@ -125,21 +164,31 @@ export default function FormulaPage() {
     });
   };
 
+  const defaultValues2 = {
+    name: "",
+  };
+
   const FormulaSchema2 = Yup.object().shape({
     name: Yup.string().required("请输入配方名称"),
   });
 
   const methods2 = useForm<Omit<FormulaProps, "code">>({
     resolver: yupResolver(FormulaSchema2),
-    defaultValues,
+    defaultValues: defaultValues2,
   });
 
   const {
+    setValue,
     handleSubmit: handleSubmit2,
     reset: reset2,
     setError: setError2,
     formState: { errors: errors2 },
   } = methods2;
+
+  useEffect(() => {
+    setValue("name", editFormula?.name || "");
+    setOpen2(!!editFormula);
+  }, [editFormula, setValue]);
 
   const onClose2 = () => {
     reset2();
@@ -218,22 +267,46 @@ export default function FormulaPage() {
             <Button key="b" onClick={() => setEditFormula(row)}>
               编辑
             </Button>
-            {!row.enable && (
-              <Button onClick={() => remove(row.id)}>删除</Button>
-            )}
+            <>
+              <Button
+                disabled={row.enable}
+                aria-describedby={id}
+                onClick={(e) => handleRemove(e, row.id)}
+              >
+                删除
+              </Button>
+              <Popover
+                id={id}
+                open={openRemove}
+                onClose={handleClose}
+                anchorEl={anchorEl}
+                anchorOrigin={{
+                  vertical: "bottom",
+                  horizontal: "left",
+                }}
+              >
+                <Box sx={{ p: 2 }}>
+                  <Typography>确认删除?</Typography>
+                  <Button onClick={() => remove()}>确认</Button>
+                  <Button onClick={handleClose}>取消</Button>
+                </Box>
+              </Popover>
+            </>
           </Stack>,
         ];
       },
     },
   ];
+  const { themeStretch } = useSettingsContext();
   return (
-    <Container>
+    <Container maxWidth={themeStretch ? false : "xl"}>
       <Breadcrumbs>
-        <Typography color="text.primary">配方管理</Typography>=
+        <Typography variant="h5" color="text.primary" gutterBottom>
+          配方管理
+        </Typography>
       </Breadcrumbs>
-      <Divider />
-      <Grid container spacing={2} sx={{ p: 2 }}>
-        {/* <Grid item xs={3}>
+      <Grid container spacing={2}>
+        <Grid item xs={2}>
           <TextField
             label="配方名"
             variant="outlined"
@@ -242,7 +315,7 @@ export default function FormulaPage() {
             onChange={(e) => setFilter({ ...filter, name: e.target.value })}
           />
         </Grid>
-        <Grid item xs={3}>
+        <Grid item xs={2}>
           <TextField
             select
             label="配方状态"
@@ -263,24 +336,27 @@ export default function FormulaPage() {
             </MenuItem>
           </TextField>
         </Grid>
-        <Grid item xs={4}></Grid>
-        <Grid item xs={1}>
-          <Button variant="outlined" onClick={onReset}>
-            重置
-          </Button>
-        </Grid>
-        <Grid item xs={1}>
-          <Button variant="contained" onClick={() => ref.current.query()}>
-            查询
-          </Button>
-        </Grid> */}
-        <Grid item xs={1}>
-          <Button variant="text" onClick={() => setOpen(true)}>
-            新增
-          </Button>
+        <Grid item xs={6}></Grid>
+        <Grid item xs={2}>
+          <Stack direction="row" spacing={2}>
+            <Button variant="outlined" onClick={onReset}>
+              重置
+            </Button>
+            <Button variant="contained" onClick={() => query()}>
+              查询
+            </Button>
+          </Stack>
         </Grid>
         <Grid item xs={12}>
-          <FetchTable columns={columns} rows={rows} />
+          <FetchTable
+            columns={columns}
+            rows={rows}
+            customToobar={
+              <Button variant="text" onClick={() => setOpen(true)}>
+                新增
+              </Button>
+            }
+          />
         </Grid>
       </Grid>
       <DialogForm
@@ -313,11 +389,12 @@ export default function FormulaPage() {
             label="配方码"
             name="code"
             defaultValue={editFormula?.code}
+            variant="filled"
             InputProps={{
               readOnly: true,
             }}
           />
-          <RHFInput label="配方名称" name="name" />
+          <RHFInput label="配方名称" name="name" autoFocus />
         </Stack>
       </DialogForm>
     </Container>
