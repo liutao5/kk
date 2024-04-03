@@ -17,7 +17,7 @@ import {
 } from "@mui/material";
 import DashboardLayout from "@/layouts/dashboard";
 import { useEffect, useRef, useState } from "react";
-import { cancelBL, getBL, getMX } from "@/api/mainApi";
+import { cancelBL, getBL } from "@/api/mainApi";
 import { MX } from "../MX";
 import {
   GridColDef,
@@ -31,7 +31,6 @@ import { useSettingsContext } from "@/components/settings";
 import ReactToPrint from "react-to-print";
 import QRCode from "react-qr-code";
 import CloseIcon from "@mui/icons-material/Close";
-import DialogForm from "@/components/dialog-form";
 import MXTable from "./MXTable";
 
 type BL = {
@@ -213,8 +212,6 @@ export default function BLPage() {
   ];
   const { themeStretch } = useSettingsContext();
 
-  const renderBL = () => {};
-
   function renderPrintContent() {
     return (
       <>
@@ -353,7 +350,7 @@ export default function BLPage() {
                 <ReactToPrint
                   content={() => printRef.current}
                   trigger={() => (
-                    <Button disabled={setSelectedBL.length == 0}>打印</Button>
+                    <Button disabled={selectedBL.length == 0}>打印</Button>
                   )}
                 />
               </>
@@ -383,7 +380,13 @@ export default function BLPage() {
           <CloseIcon />
         </IconButton>
         <DialogContent>
-          <MXTable ref={mxRef} />
+          <MXTable
+            ref={mxRef}
+            onFinish={() => {
+              setnewBL(false);
+              query();
+            }}
+          />
         </DialogContent>
         <DialogActions>
           <Button type="submit" onClick={() => mxRef.current?.renderBL()}>

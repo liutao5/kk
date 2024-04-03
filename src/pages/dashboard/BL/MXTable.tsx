@@ -48,12 +48,7 @@ import {
   useGridApiRef,
 } from "@mui/x-data-grid-premium";
 import { useSnackbar } from "@/components/snackbar";
-import RHFAutocomplete from "@/components/hook-form/RHFAutocomplete";
-import CustomPopover from "@/components/popover";
 import { useSettingsContext } from "@/components/settings";
-import ReactToPrint from "react-to-print";
-import QRCode from "react-qr-code";
-import { format } from "date-fns";
 
 export type MX = {
   id: number;
@@ -88,7 +83,12 @@ const defaultFilter = {
   status: "",
 };
 
-const MXTable = forwardRef(function MXTable(props, ref) {
+type Props = {
+  onFinish: VoidFunction;
+};
+
+const MXTable = forwardRef(function MXTable(props: Props, ref) {
+  const { onFinish } = props;
   const [filter, setFilter] = useState<Record<string, string>>(defaultFilter);
   const [rows, setRows] = useState<GridRowsProp>([]);
 
@@ -214,6 +214,7 @@ const MXTable = forwardRef(function MXTable(props, ref) {
         query();
         closeBL();
         setRowSelectionModel([]);
+        onFinish();
       } else {
         enqueueSnackbar(res.data.msg, {
           autoHideDuration: 2000,
@@ -295,6 +296,7 @@ const MXTable = forwardRef(function MXTable(props, ref) {
             }}
             rowSelectionModel={rowSelectionModel}
             rows={rows}
+            customToobar={<>MX列表</>}
           />
         </Grid>
       </Grid>
