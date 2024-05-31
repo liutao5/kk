@@ -204,7 +204,6 @@ export default function RemovalPage() {
               message={`您正在取消${record.row.orderCode}出库单,确认取消吗?`}
               onOK={() => handleCancel(record.row.id)}
             />
-            ,
           </>,
         ];
       },

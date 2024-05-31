@@ -42,10 +42,11 @@ const defaultFilter = {
   recipeName: "",
   binType: "",
   binCode: "",
+  backStock: true,
 };
 
 export default function StockPage() {
-  const [filter, setFilter] = useState<Record<string, string>>(defaultFilter);
+  const [filter, setFilter] = useState<Record<string, any>>(defaultFilter);
   const [rows, setRows] = useState<Stock[]>([]);
   const [rowSelectionModel, setRowSelectionModel] =
     useState<GridRowSelectionModel>([]);
@@ -157,6 +158,12 @@ export default function StockPage() {
           </Stack>
         );
       },
+    },
+    {
+      headerName: "返料入库",
+      field: "backStock",
+      align: "center",
+      valueGetter: (params) => (params.value ? "是" : "否"),
     },
     {
       headerName: "操作",
