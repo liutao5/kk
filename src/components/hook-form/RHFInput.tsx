@@ -16,11 +16,7 @@ export default function RHFInput({ name, helperText, ...other }: RHFProps) {
           <TextField
             {...field}
             fullWidth
-            value={
-              typeof field.value === "number" && field.value === 0
-                ? ""
-                : field.value
-            }
+            value={field.value}
             error={!!error}
             helperText={error ? error.message : helperText}
             {...other}

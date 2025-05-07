@@ -1,8 +1,6 @@
 // routes
 import { PATH_DASHBOARD } from "../../../routes/paths";
 // components
-import Label from "../../../components/label";
-import Iconify from "../../../components/iconify";
 import SvgColor from "../../../components/svg-color";
 
 // ----------------------------------------------------------------------
@@ -73,6 +71,11 @@ const navConfig = [
         title: "操作日志",
         path: PATH_DASHBOARD.general.log,
         icon: ICONS.file,
+      },
+      {
+        title: "库存统计报表",
+        path: PATH_DASHBOARD.general.record,
+        icon: ICONS.booking,
       },
     ],
   },

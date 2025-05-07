@@ -1,54 +1,41 @@
 import {
+  addBL,
+  getFormula,
+  getMX,
+  getNextBatch,
+  getNextBLBatch
+} from "@/api/mainApi";
+import DialogForm from "@/components/dialog-form";
+import FetchTable from "@/components/fetch-table";
+import RHFInput from "@/components/hook-form/RHFInput";
+import { useSettingsContext } from "@/components/settings";
+import { useSnackbar } from "@/components/snackbar";
+import { yupResolver } from "@hookform/resolvers/yup";
+import {
   Alert,
-  Box,
-  Breadcrumbs,
   Button,
   Card,
   Container,
-  Divider,
   Grid,
-  MenuItem,
-  Popover,
   Stack,
-  TextField,
-  Typography,
+  Typography
 } from "@mui/material";
-import DashboardLayout from "@/layouts/dashboard";
-import * as Yup from "yup";
-import {
-  forwardRef,
-  Ref,
-  RefObject,
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useRef,
-  useState,
-} from "react";
-import {
-  addBL,
-  addMX,
-  cancelMX,
-  getFormula,
-  getMX,
-  getNextBLBatch,
-  getNextBatch,
-} from "@/api/mainApi";
-import DialogForm from "@/components/dialog-form";
-import { useForm } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
-import RHFInput from "@/components/hook-form/RHFInput";
-import { Formula } from "../formula";
-import { statusMap } from "..";
-import FetchTable from "@/components/fetch-table";
 import {
   GridColDef,
   GridRowSelectionModel,
-  GridRowsProp,
-  useGridApiRef,
+  GridRowsProp
 } from "@mui/x-data-grid-premium";
-import { useSnackbar } from "@/components/snackbar";
-import { useSettingsContext } from "@/components/settings";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useState
+} from "react";
+import { useForm } from "react-hook-form";
+import * as Yup from "yup";
+import { statusMap } from "..";
+import { Formula } from "../formula";
 
 export type MX = {
   id: number;
@@ -107,7 +94,7 @@ const MXTable = forwardRef(function MXTable(props: Props, ref) {
   const query = () => {
     getMX(filter).then((res) => {
       if (res.data.code === 200) {
-        setRows(res.data.data);
+        setRows(res.data.data.filter((item: any) => item.status === 0));
       }
     });
   };
@@ -129,7 +116,6 @@ const MXTable = forwardRef(function MXTable(props: Props, ref) {
 
   useEffect(() => {
     query();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const queryFormula = () => {

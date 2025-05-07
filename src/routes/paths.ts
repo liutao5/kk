@@ -49,6 +49,7 @@ export const PATH_DASHBOARD = {
     removal: path(ROOTS_DASHBOARD, "/removal"),
     log: path(ROOTS_DASHBOARD, "/log"),
     setting: path(ROOTS_DASHBOARD, "/setting"),
+    record: path(ROOTS_DASHBOARD, "/record"),
   },
   mail: {
     root: path(ROOTS_DASHBOARD, "/mail"),

@@ -1,12 +1,12 @@
-import ThemeProvider from "@/theme";
 import { AuthProvider } from "@/auth";
-import type { AppProps } from "next/app";
-import { NextPage } from "next";
-import { LicenseInfo } from "@mui/x-license-pro";
-import { LocalizationProvider } from "@mui/x-date-pickers-pro";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { SettingsProvider, ThemeSettings } from "@/components/settings";
 import SnackbarProvider from "@/components/snackbar";
+import ThemeProvider from "@/theme";
+import { LocalizationProvider } from "@mui/x-date-pickers-pro";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { LicenseInfo } from "@mui/x-license-pro";
+import { NextPage } from "next";
+import type { AppProps } from "next/app";
 import Head from "next/head";
 
 type NextPageWithLayout = NextPage & {

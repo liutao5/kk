@@ -24,6 +24,10 @@ export const getMX = (filter?: any) => {
   return axios.post(`/wms/mx/list`, filter || {});
 };
 
+export const setMXWeight = (data: any) => {
+  return axios.post('/wms/mx/update/weight', data)
+}
+
 export const getNextBatch = () => {
   return axios.post("/wms/mx/get/next/batch", {});
 };
@@ -64,6 +68,10 @@ export const cancelStock = (stockCode: string) => {
   return axios.post("/wms/bl/cancel/shelve", { stockCode });
 };
 
+export const setStockWeight = (data: any) => {
+  return axios.post("/wms/stock/update/weight", data)
+}
+
 export const getRemoval = (filter?: any) => {
   return axios.post("/wms/order/list", filter || {});
 };
@@ -86,4 +94,8 @@ export const getConfig = () => {
 
 export const updateConfig = (forceFifo: string) => {
   return axios.post("/wms/config/update", { forceFifo });
+};
+
+export const getRecord = (filter?: any) => {
+  return axios.post("/wms/stock/record/list", filter || {});
 };

@@ -1,28 +1,27 @@
+import { cancelStock, getStock } from "@/api/mainApi";
+import FetchTable from "@/components/fetch-table";
+import CustomPopover from "@/components/popover";
+import { useSettingsContext } from "@/components/settings";
+import DashboardLayout from "@/layouts/dashboard";
 import {
   Box,
   Breadcrumbs,
   Button,
   Container,
-  Divider,
   Grid,
   MenuItem,
   Stack,
   TextField,
-  Typography,
+  Typography
 } from "@mui/material";
-import { useEffect, useRef, useState } from "react";
-import { cancelStock, getStock } from "@/api/mainApi";
-import { MX } from "../MX";
-import DashboardLayout from "@/layouts/dashboard";
 import { GridColDef, GridRowSelectionModel } from "@mui/x-data-grid-premium";
-import FetchTable from "@/components/fetch-table";
-import CustomPopover from "@/components/popover";
-import { useSettingsContext } from "@/components/settings";
+import { useEffect, useRef, useState } from "react";
 import QRCode from "react-qr-code";
-import { format } from "date-fns";
 import ReactToPrint from "react-to-print";
+import { MX } from "../MX";
+import WeightDialog from "./WeightDialog";
 
-type Stock = {
+export type Stock = {
   id: number;
   code: string;
   blCode: string;
@@ -30,11 +29,18 @@ type Stock = {
   binType: number;
   binCode: string;
   stockAge: number;
-  mxs: MX[];
+  mxs: string[];
+  mxWeights: string[];
   createTime: string;
+  weight?: number;
 };
 
 const binTypeMap = ["在途库区", "虚拟库区", "困料库区"];
+
+const backStockMap = [
+  { label: "是", value: "true" },
+  { label: "否", value: "false" },
+];
 
 const defaultFilter = {
   code: "",
@@ -42,7 +48,7 @@ const defaultFilter = {
   recipeName: "",
   binType: "",
   binCode: "",
-  backStock: true,
+  backStock: "",
 };
 
 export default function StockPage() {
@@ -53,17 +59,22 @@ export default function StockPage() {
   const [selectedStock, setSelectedStock] = useState<Stock[]>([]);
   const { themeStretch } = useSettingsContext();
   const printRef = useRef<HTMLDivElement>(null);
+  
+    const [openWeight, setOpenWeight] = useState<boolean>(false)
 
   useEffect(() => {
     setSelectedStock(
-      rowSelectionModel.map((id) => rows.find((r) => r.id === id) as Stock)
+      rowSelectionModel.map((code) => rows.find((r) => r.code === code) as Stock)
     );
   }, [rowSelectionModel, rows]);
 
   const query = () => {
     getStock(filter).then((res) => {
       if (res.data.code === 200) {
-        setRows(res.data.data);
+        setRows(res.data.data.map((item:any) => ({...item, 
+          mxs: item.mxs.map((mx: MX) => mx.batchCode).join(","),
+          mxWeights: item.mxs.map((mx: MX) => mx.weight).join(","),
+        })));
       } else {
         console.log(res.data.msg);
       }
@@ -109,6 +120,11 @@ export default function StockPage() {
       flex: 1,
     },
     {
+      headerName: "吨包重量（Kg）",
+      field: "weight",
+      align: "center",
+    },
+    {
       headerName: "配方名",
       field: "recipeName",
       headerAlign: "center",
@@ -145,11 +161,25 @@ export default function StockPage() {
       align: "center",
       flex: 1,
       sortable: false,
-      valueGetter: (params) => {
-        return params.value.map((mx: MX) => mx.batchCode).join(",");
-      },
       renderCell: (params) => {
-        console.log(params);
+        return (
+          <Stack direction="column" sx={{ py: 1 }}>
+            {params.value.split(",").map((mx: string) => (
+              <Typography key={mx}>{mx}</Typography>
+            ))}
+          </Stack>
+        );
+      },
+    },
+    {
+      headerName: "MX重量（Kg）",
+      field: "mxWeights",
+      headerAlign: "center",
+      align: "center",
+      flex: 1,
+      sortable: false,
+      
+      renderCell: (params) => {
         return (
           <Stack direction="column" sx={{ py: 1 }}>
             {params.value.split(",").map((mx: string) => (
@@ -252,13 +282,14 @@ export default function StockPage() {
         <Typography variant="h4" color="text.primary" gutterBottom>
           在库管理
         </Typography>
-        =
       </Breadcrumbs>
       <Grid container spacing={2} sx={{ p: 2 }}>
         <Grid item xs={2}>
           <TextField
+            sx={{ flex: 1 }}
             label="吨包号"
             size="small"
+            fullWidth
             value={filter.code}
             onChange={(e) => setFilter({ ...filter, code: e.target.value })}
           />
@@ -267,6 +298,7 @@ export default function StockPage() {
           <TextField
             label="批次号"
             size="small"
+            fullWidth
             value={filter.blCode}
             onChange={(e) => setFilter({ ...filter, blCode: e.target.value })}
           />
@@ -275,6 +307,7 @@ export default function StockPage() {
           <TextField
             label="配方名"
             size="small"
+            fullWidth
             value={filter.recipeName}
             onChange={(e) =>
               setFilter({ ...filter, recipeName: e.target.value })
@@ -300,7 +333,7 @@ export default function StockPage() {
             ))}
           </TextField>
         </Grid>
-        <Grid item xs={2}>
+        <Grid item xs={1}>
           <TextField
             label="库位编码"
             size="small"
@@ -309,6 +342,27 @@ export default function StockPage() {
           />
         </Grid>
         <Grid item xs={2}>
+          <TextField
+            select
+            label="是否是返料"
+            size="small"
+            fullWidth
+            value={filter.backStock}
+            onChange={(e) =>
+              setFilter({ ...filter, backStock: e.target.value })
+            }
+          >
+            <MenuItem key="-1" value="">
+              选择是否是返料
+            </MenuItem>
+            {backStockMap.map((item) => (
+              <MenuItem key={item.value} value={item.value}>
+                {item.label}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+        <Grid item xs={1}>
           <Stack direction="row" spacing={2}>
             <Button variant="outlined" onClick={onReset}>
               重置
@@ -322,9 +376,10 @@ export default function StockPage() {
           <FetchTable
             columns={columns}
             rows={rows}
+            getRowId={rows => rows.code}
             checkboxSelection
             hasExport
-            fileName="在库管理"
+            fileName="库存信息"
             onRowSelectionModelChange={(newRowSelectionModel) => {
               setRowSelectionModel(newRowSelectionModel);
             }}
@@ -338,6 +393,7 @@ export default function StockPage() {
                     <Button disabled={selectedStock.length == 0}>打印</Button>
                   )}
                 />
+                <Button disabled={selectedStock.length == 0} onClick={() => setOpenWeight(true)}>登记重量</Button>
               </>
             }
           />
@@ -346,6 +402,7 @@ export default function StockPage() {
       <Box sx={{ display: "none" }}>
         <div ref={printRef}>{renderPrintContent()}</div>
       </Box>
+      <WeightDialog open={openWeight} onClose={() => {setOpenWeight(false);query()}} selectedStock={selectedStock} />
     </Container>
   );
 }

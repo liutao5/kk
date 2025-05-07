@@ -1,3 +1,10 @@
+import { cancelRemoval, getRemoval } from "@/api/mainApi";
+import FetchTable from "@/components/fetch-table";
+import CustomPopover from "@/components/popover";
+import { useSettingsContext } from "@/components/settings";
+import { enqueueSnackbar } from "@/components/snackbar";
+import DashboardLayout from "@/layouts/dashboard";
+import CloseIcon from "@mui/icons-material/Close";
 import {
   Breadcrumbs,
   Button,
@@ -6,30 +13,21 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Divider,
   Grid,
   IconButton,
   MenuItem,
-  Modal,
   Stack,
   TextField,
-  Typography,
+  Typography
 } from "@mui/material";
-import DashboardLayout from "@/layouts/dashboard";
-import { useEffect, useState } from "react";
-import { cancelRemoval, getRemoval } from "@/api/mainApi";
 import { DataGridPremium, GridColDef } from "@mui/x-data-grid-premium";
-import FetchTable from "@/components/fetch-table";
 import {
   DateRangePicker,
   SingleInputDateRangeField,
 } from "@mui/x-date-pickers-pro";
 import { format } from "date-fns";
 import { useRouter } from "next/router";
-import { useSettingsContext } from "@/components/settings";
-import { enqueueSnackbar } from "@/components/snackbar";
-import CustomPopover from "@/components/popover";
-import CloseIcon from "@mui/icons-material/Close";
+import { useEffect, useState } from "react";
 
 type Removal = {
   id: number;
@@ -317,6 +315,10 @@ export default function RemovalPage() {
                 新增
               </Button>
             }
+            checkboxSelection
+            disableRowSelectionOnClick
+            hasExport={true}
+            fileName="出库信息"
           />
         </Grid>
       </Grid>

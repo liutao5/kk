@@ -5,37 +5,30 @@ import {
   updateFormula,
   updateFormulaStatus,
 } from "@/api/mainApi";
+import DialogForm from "@/components/dialog-form";
+import FetchTable from "@/components/fetch-table";
+import RHFInput from "@/components/hook-form/RHFInput";
+import { useSettingsContext } from "@/components/settings";
+import DashboardLayout from "@/layouts/dashboard";
+import { yupResolver } from "@hookform/resolvers/yup";
 import {
   Alert,
   Box,
   Breadcrumbs,
   Button,
-  ClickAwayListener,
   Container,
-  Divider,
   Grid,
-  IconButton,
-  InputAdornment,
   MenuItem,
   Popover,
   Stack,
   TextField,
-  Typography,
+  Typography
 } from "@mui/material";
-import * as Yup from "yup";
-import { useCallback, useEffect, useRef, useState } from "react";
-import DashboardLayout from "@/layouts/dashboard";
-import RHFInput from "@/components/hook-form/RHFInput";
-import { useForm } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
-import DialogForm from "@/components/dialog-form";
-import FetchTable from "@/components/fetch-table";
 import { GridColDef, GridRowsProp } from "@mui/x-data-grid-premium";
 import { enqueueSnackbar } from "notistack";
-import { useSettingsContext } from "@/components/settings";
-import QRCode from "react-qr-code";
-import Iconify from "@/components/iconify";
-import CloseIcon from "@mui/icons-material/Close";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import * as Yup from "yup";
 
 export type Formula = {
   id: number;
@@ -87,7 +80,6 @@ export default function FormulaPage() {
 
   useEffect(() => {
     query();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const update = (id: number, enable: boolean) => {

@@ -1,24 +1,17 @@
 import { HEADER } from "@/config-global";
 import useResponsive from "@/hooks/useResponsive";
-import { Box, Button, ButtonProps, useTheme } from "@mui/material";
+import { Box } from "@mui/material";
 import {
   DataGridPremium,
   DataGridPremiumProps,
-  GridCsvExportMenuItem,
-  GridCsvExportOptions,
-  GridExcelExportMenuItem,
-  GridPrintExportMenuItem,
   GridPrintGetRowsToExportParams,
   GridRowId,
-  GridRowsProp,
-  GridToolbar,
   GridToolbarContainer,
   GridToolbarExport,
-  GridToolbarExportContainer,
   GridToolbarQuickFilter,
   gridFilteredSortedRowIdsSelector,
   selectedGridRowsSelector,
-  zhCN,
+  zhCN
 } from "@mui/x-data-grid-premium";
 import { format } from "date-fns";
 import { ReactElement } from "react";
@@ -31,7 +24,7 @@ function CustomToolbar(
   return (
     <GridToolbarContainer>
       {children}
-      {hasExport && <GridToolbarExport />}
+      {hasExport && <GridToolbarExport csvOptions={{fileName: `${fileName}_${format(new Date(), 'yyyyMMddHHmmss')}`}} excelOptions={{fileName: `${fileName}_${format(new Date(), 'yyyyMMddHHmmss')}`}}  />}
       <Box sx={{ flexGrow: 1 }} />
       <GridToolbarQuickFilter />
     </GridToolbarContainer>

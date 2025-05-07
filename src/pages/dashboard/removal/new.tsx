@@ -118,7 +118,7 @@ export default function NewRemovalPage() {
   const onClose = () => setOpen(false);
 
   const onOK = () => {
-    setRows(right.map((r) => ({ ...r, totalNumber: r.number })));
+    setRows(right.map((r) => ({ ...r, totalNumber: 1 })));
     onClose();
   };
 
@@ -189,6 +189,11 @@ export default function NewRemovalPage() {
           <>
             <Button
               onClick={() => {
+                console.log(record, left, right);
+                setLeft([...left, record.row]);
+                setRight((right) =>
+                  right.filter((r) => r.recipeId !== record.row.recipeId)
+                );
                 setRows((pre) =>
                   pre.filter((row) => row.recipeId !== record.id)
                 );

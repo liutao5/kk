@@ -1,22 +1,4 @@
 import {
-  Alert,
-  Box,
-  Breadcrumbs,
-  Button,
-  Card,
-  Container,
-  Divider,
-  Grid,
-  MenuItem,
-  Popover,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
-import DashboardLayout from "@/layouts/dashboard";
-import * as Yup from "yup";
-import { Ref, RefObject, useEffect, useRef, useState } from "react";
-import {
   addBL,
   addMX,
   cancelMX,
@@ -26,25 +8,41 @@ import {
   getNextBatch,
 } from "@/api/mainApi";
 import DialogForm from "@/components/dialog-form";
-import { useForm } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
-import RHFInput from "@/components/hook-form/RHFInput";
-import { Formula } from "../formula";
-import { statusMap } from "..";
 import FetchTable from "@/components/fetch-table";
+import RHFAutocomplete from "@/components/hook-form/RHFAutocomplete";
+import RHFInput from "@/components/hook-form/RHFInput";
+import CustomPopover from "@/components/popover";
+import { useSettingsContext } from "@/components/settings";
+import { useSnackbar } from "@/components/snackbar";
+import DashboardLayout from "@/layouts/dashboard";
+import { yupResolver } from "@hookform/resolvers/yup";
+import {
+  Alert,
+  Box,
+  Breadcrumbs,
+  Button,
+  Card,
+  Container,
+  Grid,
+  MenuItem,
+  Stack,
+  TextField,
+  Typography
+} from "@mui/material";
 import {
   GridColDef,
   GridRowSelectionModel,
-  GridRowsProp,
-  useGridApiRef,
+  GridRowsProp
 } from "@mui/x-data-grid-premium";
-import { useSnackbar } from "@/components/snackbar";
-import RHFAutocomplete from "@/components/hook-form/RHFAutocomplete";
-import CustomPopover from "@/components/popover";
-import { useSettingsContext } from "@/components/settings";
-import ReactToPrint from "react-to-print";
-import QRCode from "react-qr-code";
 import { format } from "date-fns";
+import { useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import QRCode from "react-qr-code";
+import ReactToPrint from "react-to-print";
+import * as Yup from "yup";
+import { statusMap } from "..";
+import { Formula } from "../formula";
+import WeightDialog from "./WeightDialog";
 
 export type MX = {
   id: number;
@@ -56,6 +54,7 @@ export type MX = {
   updateTime: string;
   machineCode: string;
   creatorName: string;
+  weight?: number;
 };
 
 type MXForm = Omit<
@@ -95,6 +94,8 @@ export default function MXPage() {
   const [selectedMX, setSelectedMX] = useState<MX[]>([]);
   const printRef = useRef<HTMLDivElement>(null);
 
+  const [openWeight, setOpenWeight] = useState<boolean>(false)
+
   const { enqueueSnackbar } = useSnackbar();
 
   const query = () => {
@@ -116,13 +117,12 @@ export default function MXPage() {
 
   useEffect(() => {
     setSelectedMX(
-      rowSelectionModel.map((id) => rows.find((r) => r.id === id) as MX)
+      rowSelectionModel.map((batchCode) => rows.find((r) => r.batchCode === batchCode) as MX)
     );
   }, [rowSelectionModel, rows]);
 
   useEffect(() => {
     query();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const queryFormula = () => {
@@ -182,7 +182,7 @@ export default function MXPage() {
     creatorName: "",
     recipeId: 0,
     remark: "",
-    number: 4,
+    number: 1,
   };
 
   const methods = useForm<MXForm>({
@@ -214,7 +214,6 @@ export default function MXPage() {
   };
 
   const renderBL = () => {
-    console.log(rowSelectionModel);
     if (rowSelectionModel.length === 0) {
       enqueueSnackbar("请选择MX批次", {
         autoHideDuration: 2000,
@@ -247,9 +246,10 @@ export default function MXPage() {
 
   const onSubmitBL = (data: BL) => {
     const { creatorName } = data;
+    console.log('rowSelectionModel', rowSelectionModel, selectedMX)
     addBL(
       creatorName,
-      rowSelectionModel.map((mx) => Number(mx))
+      selectedMX.map((mx) => Number(mx.id))
     ).then((res) => {
       if (res.data.code === 200) {
         query();
@@ -275,6 +275,13 @@ export default function MXPage() {
     {
       headerName: "配方名",
       field: "recipeName",
+      headerAlign: "center",
+      align: "center",
+      flex: 1,
+    },
+    {
+      headerName: "重量（Kg）",
+      field: "weight",
       headerAlign: "center",
       align: "center",
       flex: 1,
@@ -474,6 +481,7 @@ export default function MXPage() {
             }}
             rowSelectionModel={rowSelectionModel}
             rows={rows}
+            getRowId={rows => rows.batchCode}
             customToobar={
               <>
                 <Button onClick={() => setOpenMX(true)}>新建</Button>
@@ -486,10 +494,11 @@ export default function MXPage() {
                     <Button disabled={selectedMX.length == 0}>打印</Button>
                   )}
                 />
+                <Button disabled={selectedMX.length == 0} onClick={() => setOpenWeight(true)}>登记重量</Button>
               </>
             }
             hasExport={true}
-            fileName="MX批次"
+            fileName='MX批次信息'
           />
         </Grid>
       </Grid>
@@ -543,7 +552,7 @@ export default function MXPage() {
             return (
               <Card key={item} sx={{ p: 2 }}>
                 <Typography>{filterItem[0].recipeName}</Typography>
-                <Stack direction="row">
+                <Stack direction="row" flexWrap="wrap">
                   {filterItem.map((f) => (
                     <Button key={f.id}>{f.batchCode}</Button>
                   ))}
@@ -557,6 +566,7 @@ export default function MXPage() {
           <RHFInput label="制定人员" name="creatorName" />
         </Stack>
       </DialogForm>
+      <WeightDialog open={openWeight} onClose={() => {setOpenWeight(false);query()}} selectedMX={selectedMX} />
     </Container>
   );
 }
