@@ -15,11 +15,13 @@ import {
   DialogTitle,
   Grid,
   IconButton,
+  InputAdornment,
   MenuItem,
   Stack,
   TextField,
-  Typography
+  Typography,
 } from "@mui/material";
+import CancelIcon from "@mui/icons-material/Cancel";
 import { DataGridPremium, GridColDef } from "@mui/x-data-grid-premium";
 import {
   DateRangePicker,
@@ -66,7 +68,7 @@ const defaultFilter = {
 
 export default function RemovalPage() {
   const { push } = useRouter();
-  const [filter, setFilter] = useState<Record<string, string>>(defaultFilter);
+  const [filter, setFilter] = useState<Record<string, any>>(defaultFilter);
   const [rows, setRows] = useState<Removal[]>([]);
   const [detail, showDetail] = useState<Removal>();
   const [dateValue, setDateValue] = useState<[Date | null, Date | null]>([
@@ -147,6 +149,15 @@ export default function RemovalPage() {
       headerAlign: "center",
       align: "center",
       flex: 1,
+      renderCell: (params) => {
+        return (
+          <Stack direction="column" sx={{ py: 1 }}>
+            {params.value.split(";").map((mx: string, index: number) => (
+              <Typography key={index}>{mx}</Typography>
+            ))}
+          </Stack>
+        );
+      },
     },
     {
       headerName: "状态",
@@ -248,6 +259,21 @@ export default function RemovalPage() {
             onChange={(e) =>
               setFilter({ ...filter, orderCode: e.target.value })
             }
+            fullWidth
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="start">
+                  {filter.orderCode && (
+                    <IconButton
+                      size="small"
+                      onClick={() => setFilter({ ...filter, orderCode: "" })}
+                    >
+                      <CancelIcon />
+                    </IconButton>
+                  )}
+                </InputAdornment>
+              ),
+            }}
           />
         </Grid>
         <Grid item xs={2}>
@@ -259,6 +285,21 @@ export default function RemovalPage() {
             onChange={(e) =>
               setFilter({ ...filter, recipeName: e.target.value })
             }
+            fullWidth
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="start">
+                  {filter.recipeName && (
+                    <IconButton
+                      size="small"
+                      onClick={() => setFilter({ ...filter, recipeName: "" })}
+                    >
+                      <CancelIcon />
+                    </IconButton>
+                  )}
+                </InputAdornment>
+              ),
+            }}
           />
         </Grid>
         <Grid item xs={2}>
@@ -270,6 +311,22 @@ export default function RemovalPage() {
             fullWidth
             value={filter.status}
             onChange={(e) => setFilter({ ...filter, status: e.target.value })}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="start">
+                  {filter.status && (
+                    <IconButton
+                      size="small"
+                      onClick={() =>
+                        setFilter({ ...filter, status: undefined })
+                      }
+                    >
+                      <CancelIcon />
+                    </IconButton>
+                  )}
+                </InputAdornment>
+              ),
+            }}
           >
             <MenuItem key="0" value="">
               选择状态
@@ -287,7 +344,25 @@ export default function RemovalPage() {
             sx={{ width: "280px" }}
             value={dateValue}
             slots={{ field: SingleInputDateRangeField }}
-            slotProps={{ textField: { size: "small" } }}
+            slotProps={{
+              textField: {
+                size: "small",
+                inputProps: {
+                  endAdornment: (
+                    <InputAdornment position="start">
+                      {
+                        <IconButton
+                          size="small"
+                          onClick={() => setDateValue([null, null])}
+                        >
+                          <CancelIcon />
+                        </IconButton>
+                      }
+                    </InputAdornment>
+                  ),
+                },
+              },
+            }}
             onChange={(dataList) => setDateValue(dataList)}
             format="yyyy/MM/dd"
           />

@@ -24,15 +24,18 @@ import {
   Card,
   Container,
   Grid,
+  IconButton,
+  InputAdornment,
   MenuItem,
   Stack,
   TextField,
-  Typography
+  Typography,
 } from "@mui/material";
+import CancelIcon from "@mui/icons-material/Cancel";
 import {
   GridColDef,
   GridRowSelectionModel,
-  GridRowsProp
+  GridRowsProp,
 } from "@mui/x-data-grid-premium";
 import { format } from "date-fns";
 import { useEffect, useRef, useState } from "react";
@@ -79,7 +82,7 @@ const defaultFilter = {
 };
 
 export default function MXPage() {
-  const [filter, setFilter] = useState<Record<string, string>>(defaultFilter);
+  const [filter, setFilter] = useState<Record<string, any>>(defaultFilter);
   const [rows, setRows] = useState<GridRowsProp>([]);
 
   const [openMX, setOpenMX] = useState(false);
@@ -94,11 +97,12 @@ export default function MXPage() {
   const [selectedMX, setSelectedMX] = useState<MX[]>([]);
   const printRef = useRef<HTMLDivElement>(null);
 
-  const [openWeight, setOpenWeight] = useState<boolean>(false)
+  const [openWeight, setOpenWeight] = useState<boolean>(false);
 
   const { enqueueSnackbar } = useSnackbar();
 
   const query = () => {
+    setRowSelectionModel([]);
     getMX(filter).then((res) => {
       if (res.data.code === 200) {
         setRows(res.data.data);
@@ -108,6 +112,7 @@ export default function MXPage() {
 
   const onReset = () => {
     setFilter(defaultFilter);
+    setRowSelectionModel([]);
     getMX().then((res) => {
       if (res.data.code === 200) {
         setRows(res.data.data);
@@ -117,7 +122,9 @@ export default function MXPage() {
 
   useEffect(() => {
     setSelectedMX(
-      rowSelectionModel.map((batchCode) => rows.find((r) => r.batchCode === batchCode) as MX)
+      rowSelectionModel.map(
+        (batchCode) => rows.find((r) => r.batchCode === batchCode) as MX
+      )
     );
   }, [rowSelectionModel, rows]);
 
@@ -202,7 +209,7 @@ export default function MXPage() {
       if (res.data.code === 200) {
         queryNextBatch();
         setOpenMX(false);
-        query();
+        onReset();
         reset();
       } else {
         reset();
@@ -246,7 +253,7 @@ export default function MXPage() {
 
   const onSubmitBL = (data: BL) => {
     const { creatorName } = data;
-    console.log('rowSelectionModel', rowSelectionModel, selectedMX)
+    console.log("rowSelectionModel", rowSelectionModel, selectedMX);
     addBL(
       creatorName,
       selectedMX.map((mx) => Number(mx.id))
@@ -427,6 +434,21 @@ export default function MXPage() {
             onChange={(e) =>
               setFilter({ ...filter, batchCode: e.target.value })
             }
+            fullWidth
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="start">
+                  {filter.batchCode && (
+                    <IconButton
+                      size="small"
+                      onClick={() => setFilter({ ...filter, batchCode: "" })}
+                    >
+                      <CancelIcon />
+                    </IconButton>
+                  )}
+                </InputAdornment>
+              ),
+            }}
           />
         </Grid>
         <Grid item xs={2}>
@@ -438,6 +460,21 @@ export default function MXPage() {
             onChange={(e) =>
               setFilter({ ...filter, recipeName: e.target.value })
             }
+            fullWidth
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="start">
+                  {filter.recipeName && (
+                    <IconButton
+                      size="small"
+                      onClick={() => setFilter({ ...filter, recipeName: "" })}
+                    >
+                      <CancelIcon />
+                    </IconButton>
+                  )}
+                </InputAdornment>
+              ),
+            }}
           />
         </Grid>
         <Grid item xs={2}>
@@ -449,6 +486,22 @@ export default function MXPage() {
             fullWidth
             value={filter.status}
             onChange={(e) => setFilter({ ...filter, status: e.target.value })}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="start">
+                  {filter.status && (
+                    <IconButton
+                      size="small"
+                      onClick={() =>
+                        setFilter({ ...filter, status: undefined })
+                      }
+                    >
+                      <CancelIcon />
+                    </IconButton>
+                  )}
+                </InputAdornment>
+              ),
+            }}
           >
             <MenuItem key="0" value="">
               选择配方状态
@@ -481,7 +534,7 @@ export default function MXPage() {
             }}
             rowSelectionModel={rowSelectionModel}
             rows={rows}
-            getRowId={rows => rows.batchCode}
+            getRowId={(rows) => rows.batchCode}
             customToobar={
               <>
                 <Button onClick={() => setOpenMX(true)}>新建</Button>
@@ -494,11 +547,16 @@ export default function MXPage() {
                     <Button disabled={selectedMX.length == 0}>打印</Button>
                   )}
                 />
-                <Button disabled={selectedMX.length == 0} onClick={() => setOpenWeight(true)}>登记重量</Button>
+                <Button
+                  disabled={selectedMX.length == 0}
+                  onClick={() => setOpenWeight(true)}
+                >
+                  登记重量
+                </Button>
               </>
             }
             hasExport={true}
-            fileName='MX批次信息'
+            fileName="MX批次信息"
           />
         </Grid>
       </Grid>
@@ -566,7 +624,14 @@ export default function MXPage() {
           <RHFInput label="制定人员" name="creatorName" />
         </Stack>
       </DialogForm>
-      <WeightDialog open={openWeight} onClose={() => {setOpenWeight(false);query()}} selectedMX={selectedMX} />
+      <WeightDialog
+        open={openWeight}
+        onClose={() => {
+          setOpenWeight(false);
+          query();
+        }}
+        selectedMX={selectedMX}
+      />
     </Container>
   );
 }

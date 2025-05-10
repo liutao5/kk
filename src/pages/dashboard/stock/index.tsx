@@ -9,11 +9,14 @@ import {
   Button,
   Container,
   Grid,
+  IconButton,
+  InputAdornment,
   MenuItem,
   Stack,
   TextField,
-  Typography
+  Typography,
 } from "@mui/material";
+import CancelIcon from "@mui/icons-material/Cancel";
 import { GridColDef, GridRowSelectionModel } from "@mui/x-data-grid-premium";
 import { useEffect, useRef, useState } from "react";
 import QRCode from "react-qr-code";
@@ -59,22 +62,28 @@ export default function StockPage() {
   const [selectedStock, setSelectedStock] = useState<Stock[]>([]);
   const { themeStretch } = useSettingsContext();
   const printRef = useRef<HTMLDivElement>(null);
-  
-    const [openWeight, setOpenWeight] = useState<boolean>(false)
+
+  const [openWeight, setOpenWeight] = useState<boolean>(false);
 
   useEffect(() => {
     setSelectedStock(
-      rowSelectionModel.map((code) => rows.find((r) => r.code === code) as Stock)
+      rowSelectionModel.map(
+        (code) => rows.find((r) => r.code === code) as Stock
+      )
     );
   }, [rowSelectionModel, rows]);
 
   const query = () => {
+    setRowSelectionModel([]);
     getStock(filter).then((res) => {
       if (res.data.code === 200) {
-        setRows(res.data.data.map((item:any) => ({...item, 
-          mxs: item.mxs.map((mx: MX) => mx.batchCode).join(","),
-          mxWeights: item.mxs.map((mx: MX) => mx.weight).join(","),
-        })));
+        setRows(
+          res.data.data.map((item: any) => ({
+            ...item,
+            mxs: item.mxs.map((mx: MX) => mx.batchCode).join(","),
+            mxWeights: item.mxs.map((mx: MX) => mx.weight).join(","),
+          }))
+        );
       } else {
         console.log(res.data.msg);
       }
@@ -91,6 +100,7 @@ export default function StockPage() {
 
   const onReset = () => {
     setFilter(defaultFilter);
+    setRowSelectionModel([]);
     getStock().then((res) => {
       if (res.data.code === 200) {
         setRows(res.data.data);
@@ -178,12 +188,12 @@ export default function StockPage() {
       align: "center",
       flex: 1,
       sortable: false,
-      
+
       renderCell: (params) => {
         return (
           <Stack direction="column" sx={{ py: 1 }}>
-            {params.value.split(",").map((mx: string) => (
-              <Typography key={mx}>{mx}</Typography>
+            {params.value.split(",").map((mx: string, index: number) => (
+              <Typography key={index}>{mx}</Typography>
             ))}
           </Stack>
         );
@@ -289,9 +299,23 @@ export default function StockPage() {
             sx={{ flex: 1 }}
             label="吨包号"
             size="small"
-            fullWidth
             value={filter.code}
             onChange={(e) => setFilter({ ...filter, code: e.target.value })}
+            fullWidth
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="start">
+                  {filter.code && (
+                    <IconButton
+                      size="small"
+                      onClick={() => setFilter({ ...filter, code: "" })}
+                    >
+                      <CancelIcon />
+                    </IconButton>
+                  )}
+                </InputAdornment>
+              ),
+            }}
           />
         </Grid>
         <Grid item xs={2}>
@@ -301,6 +325,20 @@ export default function StockPage() {
             fullWidth
             value={filter.blCode}
             onChange={(e) => setFilter({ ...filter, blCode: e.target.value })}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="start">
+                  {filter.blCode && (
+                    <IconButton
+                      size="small"
+                      onClick={() => setFilter({ ...filter, blCode: "" })}
+                    >
+                      <CancelIcon />
+                    </IconButton>
+                  )}
+                </InputAdornment>
+              ),
+            }}
           />
         </Grid>
         <Grid item xs={2}>
@@ -312,6 +350,20 @@ export default function StockPage() {
             onChange={(e) =>
               setFilter({ ...filter, recipeName: e.target.value })
             }
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="start">
+                  {filter.recipeName && (
+                    <IconButton
+                      size="small"
+                      onClick={() => setFilter({ ...filter, recipeName: "" })}
+                    >
+                      <CancelIcon />
+                    </IconButton>
+                  )}
+                </InputAdornment>
+              ),
+            }}
           />
         </Grid>
         <Grid item xs={2}>
@@ -322,8 +374,24 @@ export default function StockPage() {
             fullWidth
             value={filter.binType}
             onChange={(e) => setFilter({ ...filter, binType: e.target.value })}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="start">
+                  {filter.binType !== undefined && (
+                    <IconButton
+                      size="small"
+                      onClick={() =>
+                        setFilter({ ...filter, binType: undefined })
+                      }
+                    >
+                      <CancelIcon />
+                    </IconButton>
+                  )}
+                </InputAdornment>
+              ),
+            }}
           >
-            <MenuItem key="-1" value="">
+            <MenuItem key="-1" value={undefined}>
               选择配方状态
             </MenuItem>
             {binTypeMap.map((item, index) => (
@@ -339,6 +407,20 @@ export default function StockPage() {
             size="small"
             value={filter.binCode}
             onChange={(e) => setFilter({ ...filter, binCode: e.target.value })}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="start">
+                  {filter.binCode && (
+                    <IconButton
+                      size="small"
+                      onClick={() => setFilter({ ...filter, binCode: "" })}
+                    >
+                      <CancelIcon />
+                    </IconButton>
+                  )}
+                </InputAdornment>
+              ),
+            }}
           />
         </Grid>
         <Grid item xs={2}>
@@ -351,6 +433,22 @@ export default function StockPage() {
             onChange={(e) =>
               setFilter({ ...filter, backStock: e.target.value })
             }
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="start">
+                  {filter.backStock && (
+                    <IconButton
+                      size="small"
+                      onClick={() =>
+                        setFilter({ ...filter, backStock: undefined })
+                      }
+                    >
+                      <CancelIcon />
+                    </IconButton>
+                  )}
+                </InputAdornment>
+              ),
+            }}
           >
             <MenuItem key="-1" value="">
               选择是否是返料
@@ -376,7 +474,7 @@ export default function StockPage() {
           <FetchTable
             columns={columns}
             rows={rows}
-            getRowId={rows => rows.code}
+            getRowId={(rows) => rows.code}
             checkboxSelection
             hasExport
             fileName="库存信息"
@@ -393,7 +491,12 @@ export default function StockPage() {
                     <Button disabled={selectedStock.length == 0}>打印</Button>
                   )}
                 />
-                <Button disabled={selectedStock.length == 0} onClick={() => setOpenWeight(true)}>登记重量</Button>
+                <Button
+                  disabled={selectedStock.length == 0}
+                  onClick={() => setOpenWeight(true)}
+                >
+                  登记重量
+                </Button>
               </>
             }
           />
@@ -402,7 +505,14 @@ export default function StockPage() {
       <Box sx={{ display: "none" }}>
         <div ref={printRef}>{renderPrintContent()}</div>
       </Box>
-      <WeightDialog open={openWeight} onClose={() => {setOpenWeight(false);query()}} selectedStock={selectedStock} />
+      <WeightDialog
+        open={openWeight}
+        onClose={() => {
+          setOpenWeight(false);
+          query();
+        }}
+        selectedStock={selectedStock}
+      />
     </Container>
   );
 }

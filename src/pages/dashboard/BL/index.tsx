@@ -10,11 +10,13 @@ import {
   Divider,
   Grid,
   IconButton,
+  InputAdornment,
   MenuItem,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
+import CancelIcon from "@mui/icons-material/Cancel";
 import DashboardLayout from "@/layouts/dashboard";
 import { useEffect, useRef, useState } from "react";
 import { cancelBL, getBL } from "@/api/mainApi";
@@ -59,7 +61,7 @@ const statusMap: Record<string, string> = {
 };
 
 export default function BLPage() {
-  const [filter, setFilter] = useState<Record<string, string>>(defaultFilter);
+  const [filter, setFilter] = useState<Record<string, any>>(defaultFilter);
   const [rows, setRows] = useState<BL[]>([]);
   const [rowSelectionModel, setRowSelectionModel] =
     useState<GridRowSelectionModel>([]);
@@ -74,6 +76,7 @@ export default function BLPage() {
     );
   }, [rowSelectionModel, rows]);
   const onReset = () => {
+    setRowSelectionModel([]);
     setFilter(defaultFilter);
     getBL().then((res) => {
       if (res.data.code === 200) {
@@ -84,6 +87,7 @@ export default function BLPage() {
   };
 
   const query = () => {
+    setRowSelectionModel([]);
     getBL(filter).then((res) => {
       if (res.data.code === 200) {
         setRows(res.data.data);
@@ -290,6 +294,21 @@ export default function BLPage() {
             onChange={(e) =>
               setFilter({ ...filter, batchCode: e.target.value })
             }
+            fullWidth
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="start">
+                  {filter.batchCode && (
+                    <IconButton
+                      size="small"
+                      onClick={() => setFilter({ ...filter, batchCode: "" })}
+                    >
+                      <CancelIcon />
+                    </IconButton>
+                  )}
+                </InputAdornment>
+              ),
+            }}
           />
         </Grid>
         <Grid item xs={2}>
@@ -301,6 +320,21 @@ export default function BLPage() {
             onChange={(e) =>
               setFilter({ ...filter, recipeName: e.target.value })
             }
+            fullWidth
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="start">
+                  {filter.recipeName && (
+                    <IconButton
+                      size="small"
+                      onClick={() => setFilter({ ...filter, recipeName: "" })}
+                    >
+                      <CancelIcon />
+                    </IconButton>
+                  )}
+                </InputAdornment>
+              ),
+            }}
           />
         </Grid>
         <Grid item xs={2}>
@@ -312,6 +346,22 @@ export default function BLPage() {
             fullWidth
             value={filter.status}
             onChange={(e) => setFilter({ ...filter, status: e.target.value })}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="start">
+                  {filter.status && (
+                    <IconButton
+                      size="small"
+                      onClick={() =>
+                        setFilter({ ...filter, status: undefined })
+                      }
+                    >
+                      <CancelIcon />
+                    </IconButton>
+                  )}
+                </InputAdornment>
+              ),
+            }}
           >
             <MenuItem key="0" value="">
               选择配方状态
@@ -384,7 +434,7 @@ export default function BLPage() {
             ref={mxRef}
             onFinish={() => {
               setnewBL(false);
-              query();
+              onReset();
             }}
           />
         </DialogContent>

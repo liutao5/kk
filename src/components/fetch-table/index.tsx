@@ -11,7 +11,7 @@ import {
   GridToolbarQuickFilter,
   gridFilteredSortedRowIdsSelector,
   selectedGridRowsSelector,
-  zhCN
+  zhCN,
 } from "@mui/x-data-grid-premium";
 import { format } from "date-fns";
 import { ReactElement } from "react";
@@ -24,7 +24,16 @@ function CustomToolbar(
   return (
     <GridToolbarContainer>
       {children}
-      {hasExport && <GridToolbarExport csvOptions={{fileName: `${fileName}_${format(new Date(), 'yyyyMMddHHmmss')}`}} excelOptions={{fileName: `${fileName}_${format(new Date(), 'yyyyMMddHHmmss')}`}}  />}
+      {hasExport && (
+        <GridToolbarExport
+          csvOptions={{
+            fileName: `${fileName}_${format(new Date(), "yyyyMMddHHmmss")}`,
+          }}
+          excelOptions={{
+            fileName: `${fileName}_${format(new Date(), "yyyyMMddHHmmss")}`,
+          }}
+        />
+      )}
       <Box sx={{ flexGrow: 1 }} />
       <GridToolbarQuickFilter />
     </GridToolbarContainer>
@@ -73,6 +82,7 @@ export default function FetchTable(
         disableColumnMenu
         localeText={zhCN.components.MuiDataGrid.defaultProps.localeText}
         pagination
+        pageSizeOptions={[10, 50, 100]}
         initialState={{
           pagination: {
             paginationModel: {

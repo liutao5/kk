@@ -7,11 +7,14 @@ import {
   Button,
   Container,
   Grid,
+  IconButton,
+  InputAdornment,
   MenuItem,
   Stack,
   TextField,
-  Typography
+  Typography,
 } from "@mui/material";
+import CancelIcon from "@mui/icons-material/Cancel";
 import { GridColDef } from "@mui/x-data-grid-premium";
 import {
   DateRangePicker,
@@ -32,6 +35,8 @@ type Log = {
 const defaultFilter = {
   title: "",
   operName: "",
+  backStock: "",
+  reason: "",
 };
 
 const backStockMap = [
@@ -45,7 +50,7 @@ const reasonkMap = [
 ];
 
 export default function LogPage() {
-  const [filter, setFilter] = useState<Record<string, string>>(defaultFilter);
+  const [filter, setFilter] = useState<Record<string, any>>(defaultFilter);
   const [rows, setRows] = useState<Log[]>([]);
   const [dateValue, setDateValue] = useState<[Date | null, Date | null]>([
     null,
@@ -84,105 +89,104 @@ export default function LogPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
- const columns: GridColDef[] = [
-     {
-       headerName: "吨包号",
-       field: "code",
-       headerAlign: "center",
-       align: "center",
-       flex: 1,
-       sortable: false,
-     },
-     {
-       headerName: "批次号",
-       field: "blCode",
-       headerAlign: "center",
-       align: "center",
-       flex: 1,
-     },
-     {
-       headerName: "配方名",
-       field: "recipeName",
-       headerAlign: "center",
-       align: "center",
-       flex: 1,
-     },
-     {
-       headerName: "MX信息",
-       field: "mxInfo",
-       headerAlign: "center",
-       align: "center",
-       flex: 1,
-       sortable: false,
-       renderCell: (params) => {
-         console.log(params);
-         return (
-           <Stack direction="column" sx={{ py: 1 }}>
-             {params.value.split(";").map((mx: string) => (
-               <Typography key={mx}>{mx}</Typography>
-             ))}
-           </Stack>
-         );
-       },
-     },
-     {
-       headerName: "MX吨数（Kg）",
-       field: "mxWeight",
-       headerAlign: "center",
-       align: "center",
-       flex: 1,
-       sortable: false,
-       
-       renderCell: (params) => {
-         console.log(params);
-         return (
-           <Stack direction="column" sx={{ py: 1 }}>
-             {params.value.split(";").map((mx: string) => (
-               <Typography key={mx}>{mx}</Typography>
-             ))}
-           </Stack>
-         );
-       },
-     },
-     {
-       headerName: "库存变动（Kg）",
-       field: "changeNumber",
-       align: "center",
-     },
-     {
-       headerName: "生成原因",
-       field: "reason",
-       align: "center",
-     },
-     {
-       headerName: "生成时间",
-       field: "createTime",
-       align: "center",
-       
-       // valueGetter: (params) => format(params.value, 'YYYY-MM-DD HH:mm:SS'),
-     },
-     {
-       headerName: "返料入库",
-       field: "backStock",
-       align: "center",
-       valueGetter: (params) => (params.value ? "是" : "否"),
-     },
-     {
-       headerName: "关联单号",
-       field: "orderCode",
-       align: "center",
-     },
-   ];
+  useEffect(() => console.log("filter", filter), [filter]);
+
+  const columns: GridColDef[] = [
+    {
+      headerName: "吨包号",
+      field: "code",
+      headerAlign: "center",
+      align: "center",
+      flex: 1,
+      sortable: false,
+    },
+    {
+      headerName: "批次号",
+      field: "blCode",
+      headerAlign: "center",
+      align: "center",
+      flex: 1,
+    },
+    {
+      headerName: "配方名",
+      field: "recipeName",
+      headerAlign: "center",
+      align: "center",
+      flex: 1,
+    },
+    {
+      headerName: "MX信息",
+      field: "mxInfo",
+      headerAlign: "center",
+      align: "center",
+      flex: 1,
+      sortable: false,
+      renderCell: (params) => {
+        return (
+          <Stack direction="column" sx={{ py: 1 }}>
+            {params.value.split(";").map((mx: string) => (
+              <Typography key={mx}>{mx}</Typography>
+            ))}
+          </Stack>
+        );
+      },
+    },
+    {
+      headerName: "MX吨数（Kg）",
+      field: "mxWeight",
+      headerAlign: "center",
+      align: "center",
+      flex: 1,
+      sortable: false,
+      renderCell: (params) => {
+        return (
+          <Stack direction="column" sx={{ py: 1 }}>
+            {params.value.split(";").map((mx: string, index: number) => (
+              <Typography key={index}>{mx}</Typography>
+            ))}
+          </Stack>
+        );
+      },
+    },
+    {
+      headerName: "库存变动（Kg）",
+      field: "changeNumber",
+      align: "center",
+    },
+    {
+      headerName: "生成原因",
+      field: "reason",
+      align: "center",
+    },
+    {
+      headerName: "生成时间",
+      field: "createTime",
+      align: "center",
+
+      // valueGetter: (params) => format(params.value, 'YYYY-MM-DD HH:mm:SS'),
+    },
+    {
+      headerName: "返料入库",
+      field: "backStock",
+      align: "center",
+      valueGetter: (params) => (params.value ? "是" : "否"),
+    },
+    {
+      headerName: "关联单号",
+      field: "orderCode",
+      align: "center",
+    },
+  ];
   const { themeStretch } = useSettingsContext();
   return (
     <Container maxWidth={themeStretch ? false : "xl"}>
       <Breadcrumbs>
         <Typography variant="h4" color="text.primary" gutterBottom>
-        库存统计报表
+          库存统计报表
         </Typography>
       </Breadcrumbs>
       <Grid container spacing={2} sx={{ p: 2 }}>
-      <Grid item xs={2}>
+        <Grid item xs={2}>
           <TextField
             sx={{ flex: 1 }}
             label="吨包号"
@@ -190,6 +194,20 @@ export default function LogPage() {
             fullWidth
             value={filter.code}
             onChange={(e) => setFilter({ ...filter, code: e.target.value })}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="start">
+                  {filter.code && (
+                    <IconButton
+                      size="small"
+                      onClick={() => setFilter({ ...filter, code: "" })}
+                    >
+                      <CancelIcon />
+                    </IconButton>
+                  )}
+                </InputAdornment>
+              ),
+            }}
           />
         </Grid>
         <Grid item xs={2}>
@@ -201,29 +219,55 @@ export default function LogPage() {
             onChange={(e) =>
               setFilter({ ...filter, recipeName: e.target.value })
             }
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="start">
+                  {filter.recipeName && (
+                    <IconButton
+                      size="small"
+                      onClick={() => setFilter({ ...filter, recipeName: "" })}
+                    >
+                      <CancelIcon />
+                    </IconButton>
+                  )}
+                </InputAdornment>
+              ),
+            }}
           />
         </Grid>
         <Grid item xs={2}>
-            <TextField
-              select
-              label="生成原因"
-              size="small"
-              fullWidth
-              value={filter.backStock}
-              onChange={(e) =>
-                setFilter({ ...filter, reason: e.target.value })
-              }
-            >
-              <MenuItem key="-1" value="">
-                选择生成原因
+          <TextField
+            select
+            label="生成原因"
+            size="small"
+            fullWidth
+            value={filter.reason}
+            onChange={(e) => setFilter({ ...filter, reason: e.target.value })}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="start">
+                  {filter.reason && (
+                    <IconButton
+                      size="small"
+                      onClick={() => setFilter({ ...filter, reason: "" })}
+                    >
+                      <CancelIcon />
+                    </IconButton>
+                  )}
+                </InputAdornment>
+              ),
+            }}
+          >
+            <MenuItem key="0" value="">
+              选择生成原因
+            </MenuItem>
+            {reasonkMap.map((item) => (
+              <MenuItem key={item.value} value={item.value}>
+                {item.label}
               </MenuItem>
-              {reasonkMap.map((item) => (
-                <MenuItem key={item.value} value={item.value}>
-                  {item.label}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Grid>
+            ))}
+          </TextField>
+        </Grid>
         <Grid item xs={2}>
           <DateRangePicker
             label="生成日期"
@@ -236,26 +280,40 @@ export default function LogPage() {
           />
         </Grid>
         <Grid item xs={2}>
-            <TextField
-              select
-              label="是否是返料"
-              size="small"
-              fullWidth
-              value={filter.backStock}
-              onChange={(e) =>
-                setFilter({ ...filter, backStock: e.target.value })
-              }
-            >
-              <MenuItem key="-1" value="">
-                选择是否是返料
+          <TextField
+            select
+            label="是否是返料"
+            size="small"
+            fullWidth
+            value={filter.backStock}
+            onChange={(e) =>
+              setFilter({ ...filter, backStock: e.target.value })
+            }
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="start">
+                  {filter.backStock && (
+                    <IconButton
+                      size="small"
+                      onClick={() => setFilter({ ...filter, backStock: "" })}
+                    >
+                      <CancelIcon />
+                    </IconButton>
+                  )}
+                </InputAdornment>
+              ),
+            }}
+          >
+            <MenuItem key="0" value="">
+              选择是否是返料
+            </MenuItem>
+            {backStockMap.map((item) => (
+              <MenuItem key={item.value} value={item.value}>
+                {item.label}
               </MenuItem>
-              {backStockMap.map((item) => (
-                <MenuItem key={item.value} value={item.value}>
-                  {item.label}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Grid>
+            ))}
+          </TextField>
+        </Grid>
         <Grid item xs={2}>
           <Stack direction="row" spacing={2}>
             <Button variant="outlined" onClick={onReset}>

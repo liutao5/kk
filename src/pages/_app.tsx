@@ -32,11 +32,11 @@ export default function RootLayout({ Component, pageProps }: MyAppProps) {
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <SettingsProvider>
             <ThemeProvider>
-              <ThemeSettings>
-                <SnackbarProvider>
-                  {getLayout(<Component {...pageProps} />)}
-                </SnackbarProvider>
-              </ThemeSettings>
+              {/* <ThemeSettings> */}
+              <SnackbarProvider>
+                {getLayout(<Component {...pageProps} />)}
+              </SnackbarProvider>
+              {/* </ThemeSettings>  */}
             </ThemeProvider>
           </SettingsProvider>
         </LocalizationProvider>

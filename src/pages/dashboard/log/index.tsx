@@ -7,10 +7,13 @@ import {
   Container,
   Divider,
   Grid,
+  IconButton,
+  InputAdornment,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
+import CancelIcon from "@mui/icons-material/Cancel";
 import {
   DateRangePicker,
   SingleInputDateRangeField,
@@ -127,6 +130,21 @@ export default function LogPage() {
             size="small"
             value={filter.title}
             onChange={(e) => setFilter({ ...filter, title: e.target.value })}
+            fullWidth
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="start">
+                  {filter.title && (
+                    <IconButton
+                      size="small"
+                      onClick={() => setFilter({ ...filter, title: "" })}
+                    >
+                      <CancelIcon />
+                    </IconButton>
+                  )}
+                </InputAdornment>
+              ),
+            }}
           />
         </Grid>
         <Grid item xs={2}>
@@ -135,6 +153,21 @@ export default function LogPage() {
             size="small"
             value={filter.operName}
             onChange={(e) => setFilter({ ...filter, operName: e.target.value })}
+            fullWidth
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="start">
+                  {filter.operName && (
+                    <IconButton
+                      size="small"
+                      onClick={() => setFilter({ ...filter, operName: "" })}
+                    >
+                      <CancelIcon />
+                    </IconButton>
+                  )}
+                </InputAdornment>
+              ),
+            }}
           />
         </Grid>
         <Grid item xs={3}>
@@ -164,6 +197,7 @@ export default function LogPage() {
             getRowId={(row) => row.operId}
             columns={columns}
             rows={rows}
+            disableRowSelectionOnClick
           />
         </Grid>
       </Grid>

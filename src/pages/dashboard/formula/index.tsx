@@ -18,18 +18,20 @@ import {
   Button,
   Container,
   Grid,
+  IconButton,
+  InputAdornment,
   MenuItem,
   Popover,
   Stack,
   TextField,
-  Typography
+  Typography,
 } from "@mui/material";
+import CancelIcon from "@mui/icons-material/Cancel";
 import { GridColDef, GridRowsProp } from "@mui/x-data-grid-premium";
 import { enqueueSnackbar } from "notistack";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as Yup from "yup";
-
 export type Formula = {
   id: number;
   code: string;
@@ -49,7 +51,7 @@ const defaultFilter = {
 };
 
 export default function FormulaPage() {
-  const [filter, setFilter] = useState<Record<string, string>>(defaultFilter);
+  const [filter, setFilter] = useState<Record<string, any>>(defaultFilter);
   const [rows, setRows] = useState<GridRowsProp>([]);
   const [open, setOpen] = useState(false);
   const [open2, setOpen2] = useState(false);
@@ -146,7 +148,7 @@ export default function FormulaPage() {
     addFormula(name, code).then((res) => {
       if (res.data.code === 200) {
         onClose();
-        query();
+        onReset();
       } else {
         reset();
         setError("afterSubmit", {
@@ -305,6 +307,21 @@ export default function FormulaPage() {
             size="small"
             value={filter.name}
             onChange={(e) => setFilter({ ...filter, name: e.target.value })}
+            fullWidth
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="start">
+                  {filter.name && (
+                    <IconButton
+                      size="small"
+                      onClick={() => setFilter({ ...filter, name: "" })}
+                    >
+                      <CancelIcon />
+                    </IconButton>
+                  )}
+                </InputAdornment>
+              ),
+            }}
           />
         </Grid>
         <Grid item xs={2}>
@@ -316,6 +333,22 @@ export default function FormulaPage() {
             fullWidth
             value={filter.enable}
             onChange={(e) => setFilter({ ...filter, enable: e.target.value })}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="start">
+                  {filter.enable && (
+                    <IconButton
+                      size="small"
+                      onClick={() =>
+                        setFilter({ ...filter, enable: undefined })
+                      }
+                    >
+                      <CancelIcon />
+                    </IconButton>
+                  )}
+                </InputAdornment>
+              ),
+            }}
           >
             <MenuItem key="0" value="">
               选择配方状态
