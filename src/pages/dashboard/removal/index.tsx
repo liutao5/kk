@@ -4,6 +4,7 @@ import CustomPopover from "@/components/popover";
 import { useSettingsContext } from "@/components/settings";
 import { enqueueSnackbar } from "@/components/snackbar";
 import DashboardLayout from "@/layouts/dashboard";
+import CancelIcon from "@mui/icons-material/Cancel";
 import CloseIcon from "@mui/icons-material/Close";
 import {
   Breadcrumbs,
@@ -21,8 +22,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import CancelIcon from "@mui/icons-material/Cancel";
-import { DataGridPremium, GridColDef } from "@mui/x-data-grid-premium";
+import { DataGridPremium, GridColDef, GridExceljsProcessInput, GridRowSelectionModel } from "@mui/x-data-grid-premium";
 import {
   DateRangePicker,
   SingleInputDateRangeField,
@@ -66,6 +66,39 @@ const defaultFilter = {
   status: "",
 };
 
+function exceljsPostProcess({ workbook, worksheet }: GridExceljsProcessInput) {
+  const insertValues: Array<[number, any]> = []
+  const mergeList: [number,number][] = []
+  worksheet.eachRow((row, rowIndex) => {
+    if (rowIndex === 1) return
+
+    const mxsValues = (row.getCell(2).value as string).split(';')
+    mergeList.push([rowIndex, mxsValues.length])
+    if (mxsValues.length > 1) {
+      row.getCell(2).value = mxsValues[0]
+    }
+    for (let i=1; i<mxsValues.length;i++) {
+      const rowValue = [...(row.values as any[])]
+      rowValue[2] = mxsValues[i]
+      insertValues.push([rowIndex, rowValue.splice(1)])
+
+    }
+  })
+  let index = 1
+  insertValues.forEach(([rowIndex, values]) => {
+    worksheet.insertRow(rowIndex+index, values)
+    index = index+1
+  })
+  const cols = ['A','C','D', 'E','F','G','J']
+  cols.forEach(letter => {
+    let mergeCount = 0
+    mergeList.forEach(([start, count]) => {
+        worksheet.mergeCells(`${letter}${start+mergeCount}:${letter}${start+mergeCount+count-1}`);
+        mergeCount = mergeCount + count -1
+    })
+  })
+}
+
 export default function RemovalPage() {
   const { push } = useRouter();
   const [filter, setFilter] = useState<Record<string, any>>(defaultFilter);
@@ -75,13 +108,16 @@ export default function RemovalPage() {
     null,
     null,
   ]);
+  const [rowSelectionModel, setRowSelectionModel] =
+      useState<GridRowSelectionModel>([]);
 
   const query = () => {
+    setRowSelectionModel([]);
     getRemoval({
       ...filter,
       fromTime:
         dateValue[0] && format(dateValue[0] ?? 0, "yyyy-MM-dd 00:00:00"),
-      toTime: dateValue[1] && format(dateValue[1] ?? 0, "yyyy-MM-dd 00:00:00"),
+      toTime: dateValue[1] && format(dateValue[1] ?? 0, "yyyy-MM-dd 23:59:59"),
     }).then((res) => {
       if (res.data.code === 200) {
         setRows(res.data.data);
@@ -93,6 +129,7 @@ export default function RemovalPage() {
 
   const onReset = () => {
     setFilter(defaultFilter);
+    setRowSelectionModel([]);
     setDateValue([null, null]);
     getRemoval().then((res) => {
       if (res.data.code === 200) {
@@ -204,7 +241,6 @@ export default function RemovalPage() {
       flex: 1,
       type: "actions",
       getActions: (record) => {
-        console.log(record.row);
         return [
           <>
             <Button onClick={() => showDetail(record.row)}>详情</Button>
@@ -347,21 +383,9 @@ export default function RemovalPage() {
             slotProps={{
               textField: {
                 size: "small",
-                inputProps: {
-                  endAdornment: (
-                    <InputAdornment position="start">
-                      {
-                        <IconButton
-                          size="small"
-                          onClick={() => setDateValue([null, null])}
-                        >
-                          <CancelIcon />
-                        </IconButton>
-                      }
-                    </InputAdornment>
-                  ),
-                },
+                fullWidth: true,
               },
+              field: { clearable: true }
             }}
             onChange={(dataList) => setDateValue(dataList)}
             format="yyyy/MM/dd"
@@ -394,6 +418,12 @@ export default function RemovalPage() {
             disableRowSelectionOnClick
             hasExport={true}
             fileName="出库信息"
+            exceljsPostProcess={exceljsPostProcess}
+            getRowHeight={() => "auto"}
+            onRowSelectionModelChange={(newRowSelectionModel) => {
+              setRowSelectionModel(newRowSelectionModel);
+            }}
+            rowSelectionModel={rowSelectionModel}
           />
         </Grid>
       </Grid>

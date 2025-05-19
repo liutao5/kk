@@ -3,6 +3,7 @@ import FetchTable from "@/components/fetch-table";
 import CustomPopover from "@/components/popover";
 import { useSettingsContext } from "@/components/settings";
 import DashboardLayout from "@/layouts/dashboard";
+import CancelIcon from "@mui/icons-material/Cancel";
 import {
   Box,
   Breadcrumbs,
@@ -16,8 +17,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import CancelIcon from "@mui/icons-material/Cancel";
-import { GridColDef, GridRowSelectionModel } from "@mui/x-data-grid-premium";
+import { GridColDef, GridExceljsProcessInput, GridRowSelectionModel } from "@mui/x-data-grid-premium";
 import { useEffect, useRef, useState } from "react";
 import QRCode from "react-qr-code";
 import ReactToPrint from "react-to-print";
@@ -53,6 +53,43 @@ const defaultFilter = {
   binCode: "",
   backStock: "",
 };
+
+
+function exceljsPostProcess({ workbook, worksheet }: GridExceljsProcessInput) {
+  const insertValues: Array<[number, any]> = []
+  const mergeList: [number,number][] = []
+  worksheet.eachRow((row, rowIndex) => {
+    if (rowIndex === 1) return
+
+    const mxsValues = (row.getCell(8).value as string).split(',')
+    const weightValues = (row.getCell(9).value as string).split(',')
+    mergeList.push([rowIndex, mxsValues.length])
+    if (mxsValues.length > 1) {
+      row.getCell(8).value = mxsValues[0]
+      row.getCell(9).value = Number(weightValues[0])
+    }
+    for (let i=1; i<mxsValues.length;i++) {
+      const rowValue = [...(row.values as any[])]
+      rowValue[8] = mxsValues[i]
+      rowValue[9] = Number(weightValues[i])
+      insertValues.push([rowIndex, rowValue.splice(1)])
+
+    }
+  })
+  let index = 1
+  insertValues.forEach(([rowIndex, values]) => {
+    worksheet.insertRow(rowIndex+index, values)
+    index = index+1
+  })
+  const cols = ['A','B','C','D', 'E','F','G','J']
+  cols.forEach(letter => {
+    let mergeCount = 0
+    mergeList.forEach(([start, count]) => {
+        worksheet.mergeCells(`${letter}${start+mergeCount}:${letter}${start+mergeCount+count-1}`);
+        mergeCount = mergeCount + count -1
+    })
+  })
+}
 
 export default function StockPage() {
   const [filter, setFilter] = useState<Record<string, any>>(defaultFilter);
@@ -103,7 +140,13 @@ export default function StockPage() {
     setRowSelectionModel([]);
     getStock().then((res) => {
       if (res.data.code === 200) {
-        setRows(res.data.data);
+        setRows(
+          res.data.data.map((item: any) => ({
+            ...item,
+            mxs: item.mxs.map((mx: MX) => mx.batchCode).join(","),
+            mxWeights: item.mxs.map((mx: MX) => mx.weight).join(","),
+          }))
+        );
       }
     });
   };
@@ -174,7 +217,7 @@ export default function StockPage() {
       renderCell: (params) => {
         return (
           <Stack direction="column" sx={{ py: 1 }}>
-            {params.value.split(",").map((mx: string) => (
+            {params.value?.split(",").map((mx: string) => (
               <Typography key={mx}>{mx}</Typography>
             ))}
           </Stack>
@@ -377,7 +420,7 @@ export default function StockPage() {
             InputProps={{
               endAdornment: (
                 <InputAdornment position="start">
-                  {filter.binType !== undefined && (
+                  {filter.binType !== undefined && filter.binType !== "" && (
                     <IconButton
                       size="small"
                       onClick={() =>
@@ -478,6 +521,7 @@ export default function StockPage() {
             checkboxSelection
             hasExport
             fileName="库存信息"
+            exceljsPostProcess={exceljsPostProcess}
             onRowSelectionModelChange={(newRowSelectionModel) => {
               setRowSelectionModel(newRowSelectionModel);
             }}

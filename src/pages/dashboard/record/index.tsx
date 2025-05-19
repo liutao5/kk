@@ -2,6 +2,7 @@ import { getRecord } from "@/api/mainApi";
 import FetchTable from "@/components/fetch-table";
 import { useSettingsContext } from "@/components/settings";
 import DashboardLayout from "@/layouts/dashboard";
+import CancelIcon from "@mui/icons-material/Cancel";
 import {
   Breadcrumbs,
   Button,
@@ -14,11 +15,10 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import CancelIcon from "@mui/icons-material/Cancel";
-import { GridColDef } from "@mui/x-data-grid-premium";
+import { GridColDef, GridRowSelectionModel } from "@mui/x-data-grid-premium";
 import {
   DateRangePicker,
-  SingleInputDateRangeField,
+  SingleInputDateRangeField
 } from "@mui/x-date-pickers-pro";
 import { format } from "date-fns";
 import { useEffect, useState } from "react";
@@ -56,13 +56,16 @@ export default function LogPage() {
     null,
     null,
   ]);
+  const [rowSelectionModel, setRowSelectionModel] =
+      useState<GridRowSelectionModel>([]);
 
   const query = () => {
+    setRowSelectionModel([]);
     getRecord({
       ...filter,
       fromTime:
         dateValue[0] && format(dateValue[0] ?? 0, "yyyy-MM-dd 00:00:00"),
-      toTime: dateValue[1] && format(dateValue[1] ?? 0, "yyyy-MM-dd 00:00:00"),
+      toTime: dateValue[1] && format(dateValue[1] ?? 0, "yyyy-MM-dd 23:59:59"),
     }).then((res) => {
       if (res.data.code === 200) {
         setRows(res.data.data);
@@ -74,6 +77,7 @@ export default function LogPage() {
 
   const onReset = () => {
     setFilter(defaultFilter);
+    setRowSelectionModel([]);
     setDateValue([null, null]);
     getRecord().then((res) => {
       if (res.data.code === 200) {
@@ -88,8 +92,6 @@ export default function LogPage() {
     query();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => console.log("filter", filter), [filter]);
 
   const columns: GridColDef[] = [
     {
@@ -178,6 +180,7 @@ export default function LogPage() {
     },
   ];
   const { themeStretch } = useSettingsContext();
+  
   return (
     <Container maxWidth={themeStretch ? false : "xl"}>
       <Breadcrumbs>
@@ -271,12 +274,17 @@ export default function LogPage() {
         <Grid item xs={2}>
           <DateRangePicker
             label="生成日期"
-            sx={{ width: "240px" }}
             value={dateValue}
-            slots={{ field: SingleInputDateRangeField }}
-            slotProps={{ textField: { size: "small" } }}
+            slots={{
+              field: SingleInputDateRangeField,
+            }}
+            slotProps={{
+              textField: { size: "small", fullWidth: true}, 
+              field: { clearable: true }
+            }}
             onChange={(dataList) => setDateValue(dataList)}
             format="yyyy/MM/dd"
+            
           />
         </Grid>
         <Grid item xs={2}>
@@ -333,6 +341,10 @@ export default function LogPage() {
             fileName="库存统计报表"
             checkboxSelection
             disableRowSelectionOnClick
+            onRowSelectionModelChange={(newRowSelectionModel) => {
+              setRowSelectionModel(newRowSelectionModel);
+            }}
+            rowSelectionModel={rowSelectionModel}
           />
         </Grid>
       </Grid>

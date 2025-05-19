@@ -4,6 +4,7 @@ import { Box } from "@mui/material";
 import {
   DataGridPremium,
   DataGridPremiumProps,
+  GridExceljsProcessInput,
   GridPrintGetRowsToExportParams,
   GridRowId,
   GridToolbarContainer,
@@ -16,10 +17,12 @@ import {
 import { format } from "date-fns";
 import { ReactElement } from "react";
 
+
 function CustomToolbar(
   children?: ReactElement,
   hasExport = false,
-  fileName: string = "filename"
+  fileName: string = "filename",
+  exceljsPostProcess?: (input: GridExceljsProcessInput) => void
 ) {
   return (
     <GridToolbarContainer>
@@ -27,10 +30,12 @@ function CustomToolbar(
       {hasExport && (
         <GridToolbarExport
           csvOptions={{
-            fileName: `${fileName}_${format(new Date(), "yyyyMMddHHmmss")}`,
+            // fileName: `${fileName}_${format(new Date(), "yyyyMMddHHmmss")}`,
+            disableToolbarButton: true,
           }}
           excelOptions={{
             fileName: `${fileName}_${format(new Date(), "yyyyMMddHHmmss")}`,
+            exceljsPostProcess
           }}
         />
       )}
@@ -56,9 +61,10 @@ export default function FetchTable(
     customToobar?: ReactElement;
     hasExport?: boolean;
     fileName?: string;
+    exceljsPostProcess?: (input: GridExceljsProcessInput) => void
   }
 ) {
-  const { columns, rows, customToobar, hasExport, fileName } = props;
+  const { columns, rows, customToobar, hasExport, fileName, exceljsPostProcess } = props;
   const isDesktop = useResponsive("up", "lg");
 
   return (
@@ -91,7 +97,7 @@ export default function FetchTable(
           },
         }}
         slots={{
-          toolbar: () => CustomToolbar(customToobar, hasExport, fileName),
+          toolbar: () => CustomToolbar(customToobar, hasExport, fileName, exceljsPostProcess),
         }}
         slotProps={{
           toolbar: {

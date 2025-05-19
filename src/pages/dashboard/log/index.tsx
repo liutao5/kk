@@ -1,27 +1,26 @@
-import { useEffect, useState } from "react";
-import DashboardLayout from "@/layouts/dashboard";
 import { getLog } from "@/api/mainApi";
+import FetchTable from "@/components/fetch-table";
+import { useSettingsContext } from "@/components/settings";
+import DashboardLayout from "@/layouts/dashboard";
+import CancelIcon from "@mui/icons-material/Cancel";
 import {
   Breadcrumbs,
   Button,
   Container,
-  Divider,
   Grid,
   IconButton,
   InputAdornment,
   Stack,
   TextField,
-  Typography,
+  Typography
 } from "@mui/material";
-import CancelIcon from "@mui/icons-material/Cancel";
+import { GridColDef } from "@mui/x-data-grid-premium";
 import {
   DateRangePicker,
   SingleInputDateRangeField,
 } from "@mui/x-date-pickers-pro";
-import { GridColDef } from "@mui/x-data-grid-premium";
-import FetchTable from "@/components/fetch-table";
 import { format } from "date-fns";
-import { useSettingsContext } from "@/components/settings";
+import { useEffect, useState } from "react";
 
 type Log = {
   operId: number;
@@ -50,7 +49,7 @@ export default function LogPage() {
       ...filter,
       fromTime:
         dateValue[0] && format(dateValue[0] ?? 0, "yyyy-MM-dd 00:00:00"),
-      toTime: dateValue[1] && format(dateValue[1] ?? 0, "yyyy-MM-dd 00:00:00"),
+      toTime: dateValue[1] && format(dateValue[1] ?? 0, "yyyy-MM-dd 23:59:59"),
     }).then((res) => {
       if (res.data.code === 200) {
         setRows(res.data.data);
@@ -173,10 +172,10 @@ export default function LogPage() {
         <Grid item xs={3}>
           <DateRangePicker
             label="操作日期"
-            sx={{ width: "280px" }}
             value={dateValue}
             slots={{ field: SingleInputDateRangeField }}
-            slotProps={{ textField: { size: "small" } }}
+            slotProps={{ textField: { size: "small", fullWidth: true },
+              field: { clearable: true } }}
             onChange={(dataList) => setDateValue(dataList)}
             format="yyyy/MM/dd"
           />
